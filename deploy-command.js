@@ -16,16 +16,13 @@ const commands = [
     )
     .toJSON(),
   new SlashCommandBuilder()
-    .setName("outcome")
+    .setName("out")
     .setDescription("Note outcome")
-    .addAttachmentOption((option) =>
-      option.setName("image").setDescription("Receipt image").setRequired(true),
-    )
     .addStringOption((option) =>
       option
-        .setName("note")
-        .setDescription("Optional note about this expense")
-        .setRequired(false),
+        .setName("message")
+        .setDescription("Example: cash 12000 đi biển với team anh Sơn")
+        .setRequired(true),
     )
     .toJSON(),
 ];

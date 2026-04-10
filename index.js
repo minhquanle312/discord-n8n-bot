@@ -15,6 +15,46 @@ client.once(Events.ClientReady, (readyClient) => {
   console.log(`Logged in as ${readyClient.user.tag}`);
 });
 
+async function sendToN8n(payload) {
+  const webhookToken = process.env.N8N_WEBHOOK_TOKEN;
+
+  if (!webhookToken) {
+    throw new Error("N8N_WEBHOOK_TOKEN is not configured.");
+  }
+
+  await axios.post(process.env.N8N_WEBHOOK_URL, payload, {
+    headers: {
+      "Content-Type": "application/json",
+      "x-discord-key": webhookToken,
+    },
+    timeout: 30000,
+  });
+}
+
+function parseOutcomeMessage(message) {
+  const trimmedMessage = message.trim();
+  const match = trimmedMessage.match(/^(\S+)\s+(\d+(?:\.\d+)?)\s+(.+)$/u);
+
+  if (!match) {
+    throw new Error(
+      "Invalid outcome format. Use: <account> <amount> <description>",
+    );
+  }
+
+  const [, account, amountText, description] = match;
+  const amount = Number(amountText);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Amount must be a positive number.");
+  }
+
+  return {
+    account,
+    amount,
+    description: description.trim(),
+  };
+}
+
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -66,12 +106,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         submittedAt: new Date().toISOString(),
       };
 
-      await axios.post(process.env.N8N_WEBHOOK_URL, payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        timeout: 30000,
-      });
+      await sendToN8n(payload);
 
       await interaction.followUp({
         content: "Receipt sent to processing workflow successfully.",
@@ -86,6 +121,79 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.followUp({
         content:
           "Failed to send receipt to processing workflow. Please try again.",
+        ephemeral: true,
+      });
+    }
+
+    return;
+  }
+
+  if (interaction.commandName === "out") {
+    const message = interaction.options.getString("message", true);
+
+    let parsedOutcome;
+
+    try {
+      parsedOutcome = parseOutcomeMessage(message);
+    } catch (error) {
+      return interaction.reply({
+        content:
+          'Invalid format. Use `/out message:"cash 12000 đi biển với team anh Sơn"`.',
+        ephemeral: true,
+      });
+    }
+
+    const { account, amount, description } = parsedOutcome;
+
+    await interaction.reply({
+      content: "Processing your outcome...",
+      ephemeral: true,
+    });
+
+    try {
+      const payload = {
+        type: "out",
+        interactionId: interaction.id,
+        user: {
+          id: interaction.user.id,
+          username: interaction.user.username,
+          globalName: interaction.user.globalName || null,
+        },
+        guild: interaction.guild
+          ? {
+              id: interaction.guild.id,
+              name: interaction.guild.name,
+            }
+          : null,
+        channel: interaction.channel
+          ? {
+              id: interaction.channel.id,
+              name: interaction.channel.name || null,
+            }
+          : null,
+        outcome: {
+          account,
+          amount,
+          description,
+          originalMessage: message,
+        },
+        submittedAt: new Date().toISOString(),
+      };
+
+      await sendToN8n(payload);
+
+      await interaction.followUp({
+        content: `Outcome sent successfully: [account: ${account}] [amount: ${amount}] [description: ${description}]`,
+        ephemeral: true,
+      });
+    } catch (error) {
+      console.error(
+        "Error sending outcome to n8n:",
+        error?.response?.data || error.message,
+      );
+
+      await interaction.followUp({
+        content: "Failed to send outcome. Please try again.",
         ephemeral: true,
       });
     }
