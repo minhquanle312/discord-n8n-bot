@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+.npm
+.git
+.gitignore
+.env
+.env.*
+.DS_Store
+*.md
+.serena

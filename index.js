@@ -77,24 +77,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     try {
       const payload = {
-        interactionId: interaction.id,
-        user: {
-          id: interaction.user.id,
-          username: interaction.user.username,
-          globalName: interaction.user.globalName || null,
-        },
-        guild: interaction.guild
-          ? {
-              id: interaction.guild.id,
-              name: interaction.guild.name,
-            }
-          : null,
-        channel: interaction.channel
-          ? {
-              id: interaction.channel.id,
-              name: interaction.channel.name || null,
-            }
-          : null,
+        command: "receipt",
         receipt: {
           url: image.url,
           proxyUrl: image.proxyURL,
@@ -152,25 +135,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     try {
       const payload = {
-        type: "out",
-        interactionId: interaction.id,
-        user: {
-          id: interaction.user.id,
-          username: interaction.user.username,
-          globalName: interaction.user.globalName || null,
-        },
-        guild: interaction.guild
-          ? {
-              id: interaction.guild.id,
-              name: interaction.guild.name,
-            }
-          : null,
-        channel: interaction.channel
-          ? {
-              id: interaction.channel.id,
-              name: interaction.channel.name || null,
-            }
-          : null,
+        command: "out",
         outcome: {
           account,
           amount,
