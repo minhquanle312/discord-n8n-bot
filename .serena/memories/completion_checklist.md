@@ -1,0 +1,1 @@
+After changes, at minimum: re-register slash commands if command schema changed using `node deploy-command.js`, restart bot with `node index.js`, and manually test the Discord slash command in the target guild. No automated lint/test/build commands are currently configured in package.json.

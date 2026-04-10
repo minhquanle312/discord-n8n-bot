@@ -1,0 +1,1 @@
+Small Node.js Discord bot for expense/receipt tracking with n8n webhook integration and an Express callback endpoint. Main entrypoint is index.js. Slash command registration script is deploy-command.js. Stack: CommonJS Node.js, discord.js v14, axios, dotenv, express.

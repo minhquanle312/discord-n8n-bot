@@ -1,0 +1,1 @@
+Codebase is currently a very small CommonJS JavaScript project with minimal structure. Style uses double quotes, semicolons, async/await, and straightforward event-handler logic in single files. No formal linter/formatter/test setup found in package.json.
