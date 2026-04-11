@@ -1,0 +1,206 @@
+{
+  "name": "Discord bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "discord-receipt",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1184,
+        -224
+      ],
+      "id": "e754216c-0334-4381-8dc4-d7d0934ee612",
+      "name": "Webhook get receipt image",
+      "webhookId": "dda71a60-b186-4f74-aa60-70c8523b8fec",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JdhP0Ol8NZHq65Tj",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.command }}",
+                    "rightValue": "receipt",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "16e2d0e1-6f96-4d38-9512-7c478f87360b"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "receipt"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "81c27ccb-c781-4e4d-8136-59e441f90afe",
+                    "leftValue": "={{ $json.body.command }}",
+                    "rightValue": "out",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "outcome"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -880,
+        -256
+      ],
+      "id": "658b17aa-d4a4-4bf1-9900-f783b3bfebb3",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -496,
+        -144
+      ],
+      "id": "64fea56d-c723-420b-9086-b80792773248",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aiproxy.moreshared.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-6nsFYn2tmcijnY6Wx"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-5.4\",\n  \"input\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"input_text\",\n          \"text\": \"Extract order details from this image. Return only data matching the provided schema. Convert values like '23.120đ' to integer VND values such as 23120. Use null for fields that are not clearly visible.\"\n        },\n        {\n          \"type\": \"input_image\",\n          \"image_url\": \"{{$json.body.receipt.url}}\"\n        }\n      ]\n    }\n  ],\n  \"text\": {\n    \"format\": {\n      \"type\": \"json_schema\",\n      \"name\": \"bach_hoa_xanh_order\",\n      \"strict\": true,\n      \"schema\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"merchant\": { \"type\": [\"string\", \"null\"] },\n          \"order_status\": { \"type\": [\"string\", \"null\"] },\n          \"order_id\": { \"type\": [\"string\", \"null\"] },\n          \"order_time\": { \"type\": [\"string\", \"null\"] },\n          \"delivery_time\": { \"type\": [\"string\", \"null\"] },\n          \"items\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"additionalProperties\": false,\n              \"properties\": {\n                \"name\": { \"type\": [\"string\", \"null\"] },\n                \"quantity\": { \"type\": [\"number\", \"null\"] },\n                \"price_vnd\": { \"type\": [\"number\", \"null\"] }\n              },\n              \"required\": [\"name\", \"quantity\", \"price_vnd\"]\n            }\n          },\n          \"payment\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n              \"total_vnd\": { \"type\": [\"number\", \"null\"] },\n              \"amount_paid_vnd\": { \"type\": [\"number\", \"null\"] },\n              \"amount_due_vnd\": { \"type\": [\"number\", \"null\"] }\n            },\n            \"required\": [\"total_vnd\", \"amount_paid_vnd\", \"amount_due_vnd\"]\n          },\n          \"reward_points_vnd\": { \"type\": [\"number\", \"null\"] }\n        },\n        \"required\": [\n          \"merchant\",\n          \"order_status\",\n          \"order_id\",\n          \"order_time\",\n          \"delivery_time\",\n          \"items\",\n          \"payment\",\n          \"reward_points_vnd\"\n        ]\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -512,
+        -448
+      ],
+      "id": "2fa36047-65c1-4fd9-9c1b-d27623d4a14b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "return JSON.parse($input.first().json.output[0].content[0].text)"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        -448
+      ],
+      "id": "9abf4454-9450-467e-be27-711a3d3de852",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook get receipt image": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ce74cacd-0cc7-4caa-8541-d6608eb3d44b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ece3ee2dfa1bf7ba55c96e1d4f222c23bf9f007e1f643705a900ecde69796ebf"
+  },
+  "id": "q4uJBhA3CvnynZYS",
+  "tags": []
+}
