@@ -136,7 +136,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return JSON.parse($input.first().json.output[0].content[0].text)"
+        "jsCode": "const extracted = JSON.parse($input.first().json.output[0].content[0].text);\nconst webhook = $(\"Webhook get receipt image\").first().json.body;\nconst submittedAt = webhook.submittedAt ?? new Date().toISOString();\nconst sourceImageUrl = webhook.receipt?.url ?? null;\nconst receiptId = extracted.order_id ?? `receipt_${Date.now()}`;\nconst dedupeKey = [extracted.merchant ?? '', extracted.order_id ?? '', extracted.payment?.total_vnd ?? '', sourceImageUrl ?? ''].join('|');\n\nreturn [{\n  json: {\n    receipt_id: receiptId,\n    source_image_url: sourceImageUrl,\n    source_file_id: '',\n    merchant: extracted.merchant ?? null,\n    order_status: extracted.order_status ?? null,\n    order_time: extracted.order_time ?? null,\n    delivery_time: extracted.delivery_time ?? null,\n    total_vnd: extracted.payment?.total_vnd ?? null,\n    amount_paid_vnd: extracted.payment?.amount_paid_vnd ?? null,\n    amount_due_vnd: extracted.payment?.amount_due_vnd ?? null,\n    payment_method: '',\n    shipping_address: '',\n    note: webhook.note ?? '',\n    raw_json: JSON.stringify(extracted),\n    created_at: submittedAt,\n    updated_at: submittedAt,\n    dedupe_key: dedupeKey,\n    items: Array.isArray(extracted.items) ? extracted.items : []\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -146,9 +146,623 @@
       ],
       "id": "9abf4454-9450-467e-be27-711a3d3de852",
       "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0",
+          "mode": "list",
+          "cachedResultName": "finance_tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1215728577,
+          "mode": "list",
+          "cachedResultName": "receipt",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit#gid=1215728577"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "receipt_id": "={{ $json.receipt_id }}",
+            "source_image_url": "={{ $json.source_image_url }}",
+            "source_file_id": "={{ $json.source_file_id }}",
+            "merchant": "={{ $json.merchant }}",
+            "order_status": "={{ $json.order_status }}",
+            "order_time": "={{ $json.order_time }}",
+            "delivery_time": "={{ $json.delivery_time }}",
+            "total_vnd": "={{ $json.total_vnd }}",
+            "amount_paid_vnd": "={{ $json.amount_paid_vnd }}",
+            "amount_due_vnd": "={{ $json.amount_due_vnd }}",
+            "payment_method": "={{ $json.payment_method }}",
+            "shipping_address": "={{ $json.shipping_address }}",
+            "note": "={{ $json.note }}",
+            "raw_json": "={{ $json.raw_json }}",
+            "created_at": "={{ $json.created_at }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "dedupe_key": "={{ $json.dedupe_key }}"
+          },
+          "matchingColumns": [
+            "dedupe_key"
+          ],
+          "schema": [
+            {
+              "id": "receipt_id",
+              "displayName": "receipt_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_image_url",
+              "displayName": "source_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "source_file_id",
+              "displayName": "source_file_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "merchant",
+              "displayName": "merchant",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "order_status",
+              "displayName": "order_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "order_time",
+              "displayName": "order_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "delivery_time",
+              "displayName": "delivery_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "total_vnd",
+              "displayName": "total_vnd",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "amount_paid_vnd",
+              "displayName": "amount_paid_vnd",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "amount_due_vnd",
+              "displayName": "amount_due_vnd",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "payment_method",
+              "displayName": "payment_method",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "shipping_address",
+              "displayName": "shipping_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "note",
+              "displayName": "note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "raw_json",
+              "displayName": "raw_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "dedupe_key",
+              "displayName": "dedupe_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -48,
+        -448
+      ],
+      "id": "618285e0-aa9c-4a19-840b-04f2159ea1f6",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NwZ0rpVl0rdV0jkP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const receipt = $input.first().json;\nconst items = Array.isArray(receipt.items) ? receipt.items : [];\n\nreturn items.map((item, index) => ({\n  json: {\n    item_id: `${receipt.receipt_id}:${index + 1}`,\n    receipt_id: receipt.receipt_id,\n    item_name: item?.name ?? null,\n    quantity: item?.quantity ?? null,\n    price_vnd: item?.price_vnd ?? null,\n    line_total_vnd: typeof item?.quantity === 'number' && typeof item?.price_vnd === 'number' ? item.quantity * item.price_vnd : null,\n    raw_item_json: JSON.stringify(item ?? null)\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -240
+      ],
+      "id": "e73a0708-6d55-4b3b-9f84-6a09f574d965",
+      "name": "Flatten receipt items"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0",
+          "mode": "list",
+          "cachedResultName": "finance_tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1085266604,
+          "mode": "list",
+          "cachedResultName": "receipt_items",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit#gid=1085266604"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "item_id": "={{ $json.item_id }}",
+            "receipt_id": "={{ $json.receipt_id }}",
+            "item_name": "={{ $json.item_name }}",
+            "quantity": "={{ $json.quantity }}",
+            "price_vnd": "={{ $json.price_vnd }}",
+            "line_total_vnd": "={{ $json.line_total_vnd }}",
+            "raw_item_json": "={{ $json.raw_item_json }}"
+          },
+          "matchingColumns": [
+            "item_id"
+          ],
+          "schema": [
+            {
+              "id": "item_id",
+              "displayName": "item_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "receipt_id",
+              "displayName": "receipt_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "item_name",
+              "displayName": "item_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "quantity",
+              "displayName": "quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "price_vnd",
+              "displayName": "price_vnd",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "line_total_vnd",
+              "displayName": "line_total_vnd",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "raw_item_json",
+              "displayName": "raw_item_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        160,
+        -240
+      ],
+      "id": "e7db8d67-563b-48cd-a4c7-6ec5d90cb640",
+      "name": "Append or update receipt items row",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NwZ0rpVl0rdV0jkP",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Webhook get receipt image": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.moreshared.com",
+            "user-agent": "axios/1.15.0",
+            "content-length": "647",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "content-type": "application/json",
+            "x-discord-key": "kMWMbRwysGw3LCQrblrIidBifDim0IbF9D7SzCSKHQ9t5RoPaOrCBSAGM6h3gHGp",
+            "x-forwarded-for": "14.186.182.27",
+            "x-forwarded-host": "n8n.moreshared.com",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "52683ad975a4",
+            "x-real-ip": "14.186.182.27"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "command": "receipt",
+            "receipt": {
+              "url": "https://cdn.discordapp.com/ephemeral-attachments/1492003832287465524/1492043090184114287/Screenshot_20260410_122559_Qu_Tng_VIP.jpg?ex=69d9e4e9&is=69d89369&hm=e0c07fa9dc473588620400c2e6c386ebcbfe54097cfb2edae616842a0df4f0f7&",
+              "proxyUrl": "https://media.discordapp.net/ephemeral-attachments/1492003832287465524/1492043090184114287/Screenshot_20260410_122559_Qu_Tng_VIP.jpg?ex=69d9e4e9&is=69d89369&hm=e0c07fa9dc473588620400c2e6c386ebcbfe54097cfb2edae616842a0df4f0f7&",
+              "name": "Screenshot_20260410_122559_Qu_Tng_VIP.jpg",
+              "size": 107724,
+              "contentType": "image/jpeg"
+            },
+            "note": "",
+            "submittedAt": "2026-04-10T06:06:34.671Z"
+          },
+          "webhookUrl": "https://n8n.moreshared.com/webhook-test/discord-receipt",
+          "executionMode": "test"
+        }
+      }
+    ],
+    "HTTP Request": [
+      {
+        "json": {
+          "id": "resp_086cab1742ee6bb70169d896a30bf081919c16e6cc2fbafebf",
+          "object": "response",
+          "created_at": 1775802019,
+          "status": "completed",
+          "background": false,
+          "completed_at": 1775802026,
+          "error": null,
+          "frequency_penalty": 0,
+          "incomplete_details": null,
+          "instructions": null,
+          "max_output_tokens": null,
+          "max_tool_calls": null,
+          "model": "gpt-5.4",
+          "output": [
+            {
+              "id": "msg_086cab1742ee6bb70169d896a8854c81919e6672becd369c4d",
+              "type": "message",
+              "status": "completed",
+              "content": [
+                {
+                  "type": "output_text",
+                  "annotations": [],
+                  "logprobs": [],
+                  "text": "{\"merchant\":\"Bách hóa XANH\",\"order_status\":\"Giao thành công\",\"order_id\":\"OV105095604317177\",\"order_time\":\"16:47, 08/04/2026\",\"delivery_time\":\"16:47, 08/04/2026\",\"items\":[{\"name\":\"THỊT XAY C.P\",\"quantity\":0.17,\"price_vnd\":23120}],\"payment\":{\"total_vnd\":23120,\"amount_paid_vnd\":23120,\"amount_due_vnd\":0},\"reward_points_vnd\":231}"
+                }
+              ],
+              "phase": "final_answer",
+              "role": "assistant"
+            }
+          ],
+          "parallel_tool_calls": true,
+          "presence_penalty": 0,
+          "previous_response_id": null,
+          "prompt_cache_key": "e7c9dd6c-99df-4130-8a78-d6a5bbeaaaf1",
+          "prompt_cache_retention": null,
+          "reasoning": {
+            "effort": "none",
+            "summary": null
+          },
+          "safety_identifier": "user-d8AvGPekxf1C1ARxxoHiwjJp",
+          "service_tier": "default",
+          "store": false,
+          "temperature": 1,
+          "text": {
+            "format": {
+              "type": "json_schema",
+              "description": null,
+              "name": "bach_hoa_xanh_order",
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "merchant": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "order_status": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "order_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "order_time": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "delivery_time": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "quantity": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "price_vnd": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "quantity",
+                        "price_vnd"
+                      ]
+                    }
+                  },
+                  "payment": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "total_vnd": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "amount_paid_vnd": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "amount_due_vnd": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "total_vnd",
+                      "amount_paid_vnd",
+                      "amount_due_vnd"
+                    ]
+                  },
+                  "reward_points_vnd": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "merchant",
+                  "order_status",
+                  "order_id",
+                  "order_time",
+                  "delivery_time",
+                  "items",
+                  "payment",
+                  "reward_points_vnd"
+                ]
+              },
+              "strict": true
+            },
+            "verbosity": "medium"
+          },
+          "tool_choice": "auto",
+          "tool_usage": {
+            "image_gen": {
+              "input_tokens": 0,
+              "input_tokens_details": {
+                "image_tokens": 0,
+                "text_tokens": 0
+              },
+              "output_tokens": 0,
+              "output_tokens_details": {
+                "image_tokens": 0,
+                "text_tokens": 0
+              },
+              "total_tokens": 0
+            },
+            "web_search": {
+              "num_requests": 0
+            }
+          },
+          "tools": [],
+          "top_logprobs": 0,
+          "top_p": 0.98,
+          "truncation": "disabled",
+          "usage": {
+            "input_tokens": 2756,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 128,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 2884
+          },
+          "user": null,
+          "metadata": {}
+        }
+      }
+    ]
+  },
   "connections": {
     "Webhook get receipt image": {
       "main": [
@@ -189,6 +803,33 @@
           }
         ]
       ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Flatten receipt items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten receipt items": {
+      "main": [
+        [
+          {
+            "node": "Append or update receipt items row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -196,11 +837,18 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "ce74cacd-0cc7-4caa-8541-d6608eb3d44b",
+  "versionId": "b6ad09e5-7c28-44a1-b5b9-5e8f9797bd64",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ece3ee2dfa1bf7ba55c96e1d4f222c23bf9f007e1f643705a900ecde69796ebf"
   },
   "id": "q4uJBhA3CvnynZYS",
-  "tags": []
+  "tags": [
+    {
+      "updatedAt": "2026-04-11T10:31:31.300Z",
+      "createdAt": "2026-04-11T10:31:31.300Z",
+      "id": "RoSAt6cO0XPo6C9s",
+      "name": "personal"
+    }
+  ]
 }
