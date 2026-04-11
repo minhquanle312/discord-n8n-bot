@@ -6,6 +6,7 @@
         "httpMethod": "POST",
         "path": "discord-receipt",
         "authentication": "headerAuth",
+        "responseMode": "responseNode",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
@@ -27,6 +28,19 @@
     },
     {
       "parameters": {
+        "jsCode": "const body = $json.body ?? {};\nconst command = body.command ?? null;\n\nif (command === 'receipt') {\n  const imageUrl = body.receipt?.url;\n  const contentType = body.receipt?.contentType ?? '';\n\n  if (!imageUrl) {\n    return [{ json: { route: 'invalid', error_code: 'MISSING_RECEIPT_URL', message: 'receipt.url is required for the receipt workflow.' } }];\n  }\n\n  if (contentType && !contentType.startsWith('image/')) {\n    return [{ json: { route: 'invalid', error_code: 'INVALID_RECEIPT_CONTENT_TYPE', message: 'receipt.contentType must be an image/* mime type.' } }];\n  }\n\n  return [{ json: { ...$json, route: 'receipt' } }];\n}\n\nif (command === 'out') {\n  return [{ json: { ...$json, route: 'outcome' } }];\n}\n\nreturn [{ json: { route: 'invalid', error_code: 'UNSUPPORTED_COMMAND', message: 'Only the receipt command is supported by this webhook path.' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        -224
+      ],
+      "id": "3b2d3136-5228-477a-ac32-fb6dccd3b70d",
+      "name": "Validate webhook payload"
+    },
+    {
+      "parameters": {
         "rules": {
           "values": [
             {
@@ -39,7 +53,7 @@
                 },
                 "conditions": [
                   {
-                    "leftValue": "={{ $json.body.command }}",
+                    "leftValue": "={{ $json.route }}",
                     "rightValue": "receipt",
                     "operator": {
                       "type": "string",
@@ -64,8 +78,8 @@
                 "conditions": [
                   {
                     "id": "81c27ccb-c781-4e4d-8136-59e441f90afe",
-                    "leftValue": "={{ $json.body.command }}",
-                    "rightValue": "out",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "outcome",
                     "operator": {
                       "type": "string",
                       "operation": "equals"
@@ -76,6 +90,30 @@
               },
               "renameOutput": true,
               "outputKey": "outcome"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "706955a9-c8f0-4684-b9c9-f4042641ce38",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "invalid",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "invalid"
             }
           ]
         },
@@ -136,7 +174,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const extracted = JSON.parse($input.first().json.output[0].content[0].text);\nconst webhook = $(\"Webhook get receipt image\").first().json.body;\nconst submittedAt = webhook.submittedAt ?? new Date().toISOString();\nconst sourceImageUrl = webhook.receipt?.url ?? null;\nconst receiptId = extracted.order_id ?? `receipt_${Date.now()}`;\nconst dedupeKey = [extracted.merchant ?? '', extracted.order_id ?? '', extracted.payment?.total_vnd ?? '', sourceImageUrl ?? ''].join('|');\n\nreturn [{\n  json: {\n    receipt_id: receiptId,\n    source_image_url: sourceImageUrl,\n    source_file_id: '',\n    merchant: extracted.merchant ?? null,\n    order_status: extracted.order_status ?? null,\n    order_time: extracted.order_time ?? null,\n    delivery_time: extracted.delivery_time ?? null,\n    total_vnd: extracted.payment?.total_vnd ?? null,\n    amount_paid_vnd: extracted.payment?.amount_paid_vnd ?? null,\n    amount_due_vnd: extracted.payment?.amount_due_vnd ?? null,\n    payment_method: '',\n    shipping_address: '',\n    note: webhook.note ?? '',\n    raw_json: JSON.stringify(extracted),\n    created_at: submittedAt,\n    updated_at: submittedAt,\n    dedupe_key: dedupeKey,\n    items: Array.isArray(extracted.items) ? extracted.items : []\n  }\n}];"
+        "jsCode": "const extracted = JSON.parse($input.first().json.output[0].content[0].text);\nconst webhook = $(\"Webhook get receipt image\").first().json.body;\nconst submittedAt = webhook.submittedAt ?? new Date().toISOString();\nconst sourceImageUrl = webhook.receipt?.url ?? null;\nconst receiptId = extracted.order_id ?? `receipt_${Date.now()}`;\nconst dedupeKey = [extracted.merchant ?? '', extracted.order_id ?? '', extracted.payment?.total_vnd ?? '', extracted.order_time ?? ''].join('|');\n\nreturn [{\n  json: {\n    receipt_id: receiptId,\n    source_image_url: sourceImageUrl,\n    source_file_id: '',\n    merchant: extracted.merchant ?? null,\n    order_status: extracted.order_status ?? null,\n    order_time: extracted.order_time ?? null,\n    delivery_time: extracted.delivery_time ?? null,\n    total_vnd: extracted.payment?.total_vnd ?? null,\n    amount_paid_vnd: extracted.payment?.amount_paid_vnd ?? null,\n    amount_due_vnd: extracted.payment?.amount_due_vnd ?? null,\n    payment_method: '',\n    shipping_address: '',\n    note: webhook.note ?? '',\n    raw_json: JSON.stringify(extracted),\n    created_at: submittedAt,\n    updated_at: submittedAt,\n    dedupe_key: dedupeKey,\n    items: Array.isArray(extracted.items) ? extracted.items : []\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -146,6 +184,112 @@
       ],
       "id": "9abf4454-9450-467e-be27-711a3d3de852",
       "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Webhook get receipt image').first().json.body.receipt.url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -32,
+        -576
+      ],
+      "id": "c5448bf9-7cee-4c2b-a482-28d8f31a8d77",
+      "name": "Download original receipt image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tinify.com/shrink",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Basic ' + Buffer.from('api:' + $env.TINIFY_API_KEY).toString('base64') }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "sendBinaryData": true,
+        "binaryPropertyName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        192,
+        -576
+      ],
+      "id": "2dbdd634-1a34-4a96-8910-dd43c3d8205b",
+      "name": "Compress receipt image with Tinify"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.output.url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        -576
+      ],
+      "id": "95c1d57a-f6c0-45c7-a322-6d2781d2dca9",
+      "name": "Download compressed receipt image"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "inputDataFieldName": "data",
+        "name": "={{ $binary.data.fileName || `${$('Code in JavaScript').first().json.receipt_id}-compressed.jpg` }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "root",
+          "mode": "list"
+        },
+        "options": {
+          "simplifyOutput": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        640,
+        -576
+      ],
+      "id": "d81f1972-1d2f-4a1e-a396-5309612667e9",
+      "name": "Upload compressed receipt to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "NwZ0rpVl0rdV0jkP",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Code in JavaScript').first().json;\nconst drive = $json;\n\nreturn [{\n  json: {\n    ...base,\n    source_file_id: drive.id ?? '',\n    source_image_url: drive.webViewLink ?? drive.webContentLink ?? base.source_image_url,\n    updated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        -576
+      ],
+      "id": "51a87b32-f7d1-4673-8b6e-91f3475f9f78",
+      "name": "Finalize receipt row"
     },
     {
       "parameters": {
@@ -515,6 +659,54 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: false, error_code: $json.error_code || 'INVALID_REQUEST', message: $json.message || 'The webhook payload is invalid.' } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -656,
+        -48
+      ],
+      "id": "3981fc55-ee42-45b0-a5f4-8670534d15fa",
+      "name": "Respond invalid webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        384,
+        -240
+      ],
+      "id": "17711e2a-bac3-46f7-87b3-9db998c7b8f7",
+      "name": "Respond outcome webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, receipt_id: $json.receipt_id, source_file_id: $json.source_file_id, source_image_url: $json.source_image_url } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        384,
+        -96
+      ],
+      "id": "4110f22c-40bc-4f18-a3a8-cf7ec0908af9",
+      "name": "Respond receipt success"
     }
   ],
   "pinData": {
@@ -768,6 +960,17 @@
       "main": [
         [
           {
+            "node": "Validate webhook payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate webhook payload": {
+      "main": [
+        [
+          {
             "node": "Switch",
             "type": "main",
             "index": 0
@@ -790,6 +993,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Respond invalid webhook",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -808,10 +1018,71 @@
       "main": [
         [
           {
+            "node": "Download original receipt image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download original receipt image": {
+      "main": [
+        [
+          {
+            "node": "Compress receipt image with Tinify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compress receipt image with Tinify": {
+      "main": [
+        [
+          {
+            "node": "Download compressed receipt image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download compressed receipt image": {
+      "main": [
+        [
+          {
+            "node": "Upload compressed receipt to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload compressed receipt to Drive": {
+      "main": [
+        [
+          {
+            "node": "Finalize receipt row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize receipt row": {
+      "main": [
+        [
+          {
             "node": "Append or update row in sheet",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
           {
             "node": "Flatten receipt items",
             "type": "main",
@@ -825,6 +1096,28 @@
         [
           {
             "node": "Append or update receipt items row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update receipt items row": {
+      "main": [
+        [
+          {
+            "node": "Respond receipt success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond outcome webhook",
             "type": "main",
             "index": 0
           }
