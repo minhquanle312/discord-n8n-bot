@@ -12,10 +12,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -464,
-        1344
+        1840,
+        2480
       ],
-      "id": "ad0716d4-c686-4450-801e-3c4dfcac9d4b",
+      "id": "bd5f2c3c-8c7f-4ffa-b5b7-ad0779d6f8ba",
       "name": "Webhook get receipt image",
       "webhookId": "dda71a60-b186-4f74-aa60-70c8523b8fec",
       "credentials": {
@@ -28,15 +28,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body ?? {};\nconst command = body.command ?? null;\n\nif (command === 'receipt') {\n  const imageUrl = body.receipt?.url;\n  const contentType = body.receipt?.contentType ?? '';\n\n  if (!imageUrl) {\n    return [{ json: { route: 'invalid', error_code: 'MISSING_RECEIPT_URL', message: 'receipt.url is required for the receipt workflow.' } }];\n  }\n\n  if (contentType && !contentType.startsWith('image/')) {\n    return [{ json: { route: 'invalid', error_code: 'INVALID_RECEIPT_CONTENT_TYPE', message: 'receipt.contentType must be an image/* mime type.' } }];\n  }\n\n  return [{ json: { ...$json, route: 'receipt' } }];\n}\n\nif (command === 'out') {\n  return [{ json: { ...$json, route: 'outcome' } }];\n}\n\nreturn [{ json: { route: 'invalid', error_code: 'UNSUPPORTED_COMMAND', message: 'Only the receipt command is supported by this webhook path.' } }];"
+        "jsCode": "const body = $json.body ?? {};\nconst command = body.command ?? null;\n\nif (command === 'receipt') {\n  const imageUrl = body.receipt?.url;\n  const contentType = body.receipt?.contentType ?? '';\n\n  if (!imageUrl) {\n    return [{ json: { route: 'invalid', error_code: 'MISSING_RECEIPT_URL', message: 'receipt.url is required for the receipt workflow.' } }];\n  }\n\n  if (contentType && !contentType.startsWith('image/')) {\n    return [{ json: { route: 'invalid', error_code: 'INVALID_RECEIPT_CONTENT_TYPE', message: 'receipt.contentType must be an image/* mime type.' } }];\n  }\n\n  return [{ json: { ...$json, route: 'receipt' } }];\n}\n\nif (command === 'out') {\n  return [{ json: { ...$json, route: 'outcome' } }];\n}\n\nreturn [{ json: { route: 'invalid', error_code: 'UNSUPPORTED_COMMAND', message: 'Only the receipt and out commands are supported by this webhook path.' } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -224,
-        1328
+        2080,
+        2464
       ],
-      "id": "5e52635d-f169-4457-969d-e176b550a387",
+      "id": "2c62b7e2-0096-43c2-85dc-ea34e2e563c4",
       "name": "Validate webhook payload"
     },
     {
@@ -122,24 +122,157 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -16,
-        1312
+        2288,
+        2448
       ],
-      "id": "c93973ac-fba4-4d49-b593-43b49272e891",
+      "id": "dd7798e7-dff7-471b-9790-93b943d310b1",
       "name": "Switch"
     },
     {
       "parameters": {
+        "jsCode": "const body = $json.body ?? {};\nconst submittedAt = body.submittedAt ?? new Date().toISOString();\n\nif ((body.command ?? null) !== 'out') {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Unsupported outcome request.' } }];\n}\n\nif (body.mode === 'finalize') {\n  const draft = body.outcome?.draft ?? null;\n  const accountId = body.outcome?.account_id ?? null;\n\n  if (!draft || !accountId) {\n    return [{ json: { route: 'respond', status: 'invalid', message: 'Missing pending outcome draft or account selection.' } }];\n  }\n\n  return [{ json: { route: 'finalize', submittedAt, draft, account_id: accountId } }];\n}\n\nconst originalMessage = String(body.outcome?.originalMessage ?? '').trim();\n\nif (!originalMessage) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Outcome originalMessage is required.' } }];\n}\n\nreturn [{\n  json: {\n    route: 'extract',\n    submittedAt,\n    originalMessage,\n    discordContext: body.discordContext ?? {}\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2624,
+        2688
+      ],
+      "id": "bc73a1bb-fa75-4896-a660-1c72d6f4ce48",
+      "name": "Prepare outcome mode"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "extract",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "fd1b6c46-2c1f-4b6a-b0f2-30ae5c218cc1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "extract"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "finalize",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b4ea4907-b93a-42a2-b0ae-e3e0ba8f1f14"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "finalize"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "respond",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "2b7fd841-3c71-4d30-b54b-8d2ec99cef39"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "respond"
+            }
+          ]
+        },
         "options": {}
       },
-      "type": "n8n-nodes-base.set",
+      "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        304,
-        1328
+        2864,
+        2672
       ],
-      "id": "b9229b6a-ffd0-4472-a469-311a6414ae82",
-      "name": "Edit Fields"
+      "id": "44b8af44-f76a-4053-a03f-7932d11c8251",
+      "name": "Outcome mode switch"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0",
+          "mode": "list",
+          "cachedResultName": "finance_tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "accounts"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3120,
+        2272
+      ],
+      "id": "406b3486-a079-4a2b-8d68-e0e73a2aba25",
+      "name": "Read accounts for outcome extract",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NwZ0rpVl0rdV0jkP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Prepare outcome mode').first().json;\nconst accountRows = $('Read accounts for outcome extract').all().map((item) => item.json);\nconst categoryRows = $input.all().map((item) => item.json);\n\nconst accountOptions = accountRows\n  .filter((row) => row.account_id && row.account_name)\n  .map((row) => ({\n    value: String(row.account_id).trim(),\n    label: String(row.account_name).trim(),\n    description: row.provider ? String(row.provider).trim().slice(0, 100) : undefined\n  }));\n\nconst categoryOptions = categoryRows\n  .filter((row) => row.category_name)\n  .filter((row) => String(row.active ?? 'TRUE').toLowerCase() !== 'false')\n  .map((row) => ({\n    value: String(row.category_name).trim(),\n    label: String(row.category_name).trim(),\n    description: row.parent_category ? `Parent: ${String(row.parent_category).trim()}`.slice(0, 100) : undefined\n  }));\n\nreturn [{\n  json: {\n    ...base,\n    account_options: accountOptions,\n    category_options: categoryOptions,\n    account_catalog_text: accountOptions.length > 0 ? accountOptions.map((option) => `${option.value}: ${option.label}${option.description ? ` (${option.description})` : ''}`).join('; ') : 'No accounts available',\n    category_catalog_text: categoryOptions.length > 0 ? categoryOptions.map((option) => `${option.value}${option.description ? ` (${option.description})` : ''}`).join('; ') : 'No categories available'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3504,
+        2384
+      ],
+      "id": "d4d1253f-e96b-4759-ab4b-3370532a5242",
+      "name": "Build outcome catalogs"
     },
     {
       "parameters": {
@@ -160,29 +293,355 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"gpt-5.4\",\n  \"input\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"input_text\",\n          \"text\": \"Extract order details from this image. Return only data matching the provided schema. Convert values like '23.120đ' to integer VND values such as 23120. Use null for fields that are not clearly visible.\"\n        },\n        {\n          \"type\": \"input_image\",\n          \"image_url\": \"{{$json.body.receipt.url}}\"\n        }\n      ]\n    }\n  ],\n  \"text\": {\n    \"format\": {\n      \"type\": \"json_schema\",\n      \"name\": \"bach_hoa_xanh_order\",\n      \"strict\": true,\n      \"schema\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"merchant\": { \"type\": [\"string\", \"null\"] },\n          \"order_status\": { \"type\": [\"string\", \"null\"] },\n          \"order_id\": { \"type\": [\"string\", \"null\"] },\n          \"order_time\": { \"type\": [\"string\", \"null\"] },\n          \"delivery_time\": { \"type\": [\"string\", \"null\"] },\n          \"items\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"additionalProperties\": false,\n              \"properties\": {\n                \"name\": { \"type\": [\"string\", \"null\"] },\n                \"quantity\": { \"type\": [\"number\", \"null\"] },\n                \"price_vnd\": { \"type\": [\"number\", \"null\"] }\n              },\n              \"required\": [\"name\", \"quantity\", \"price_vnd\"]\n            }\n          },\n          \"payment\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n              \"total_vnd\": { \"type\": [\"number\", \"null\"] },\n              \"amount_paid_vnd\": { \"type\": [\"number\", \"null\"] },\n              \"amount_due_vnd\": { \"type\": [\"number\", \"null\"] }\n            },\n            \"required\": [\"total_vnd\", \"amount_paid_vnd\", \"amount_due_vnd\"]\n          },\n          \"reward_points_vnd\": { \"type\": [\"number\", \"null\"] }\n        },\n        \"required\": [\n          \"merchant\",\n          \"order_status\",\n          \"order_id\",\n          \"order_time\",\n          \"delivery_time\",\n          \"items\",\n          \"payment\",\n          \"reward_points_vnd\"\n        ]\n      }\n    }\n  }\n}",
+        "jsonBody": "={\n  \"model\": \"gpt-5.4\",\n  \"input\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"input_text\",\n          \"text\": \"Extract a single expense transaction from the user's free-form message. This command always represents an expense. Return amount as an integer VND value. Return note as a short purchase description. Choose account_id only from the live account catalog when the message clearly matches one of those account ids or labels; otherwise return null. Choose category only from the live category catalog when the note strongly matches one of them; otherwise return null. Live account catalog: {{$json.account_catalog_text}}. Live category catalog: {{$json.category_catalog_text}}. User message: {{$json.originalMessage}}\"\n        }\n      ]\n    }\n  ],\n  \"text\": {\n    \"format\": {\n      \"type\": \"json_schema\",\n      \"name\": \"outcome_transaction\",\n      \"strict\": true,\n      \"schema\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"amount\": { \"type\": [\"number\", \"null\"] },\n          \"note\": { \"type\": [\"string\", \"null\"] },\n          \"account_id\": { \"type\": [\"string\", \"null\"] },\n          \"category\": { \"type\": [\"string\", \"null\"] }\n        },\n        \"required\": [\"amount\", \"note\", \"account_id\", \"category\"]\n      }\n    }\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        288,
-        1120
+        3728,
+        2384
       ],
-      "id": "74693048-4087-4cb0-a1fa-1283ea5f6c3c",
-      "name": "HTTP Request"
+      "id": "52225e52-7751-4748-8993-ddc8cb513b84",
+      "name": "Extract outcome with AI"
     },
     {
       "parameters": {
-        "jsCode": "const extracted = JSON.parse($input.first().json.output[0].content[0].text);\nconst webhook = $(\"Webhook get receipt image\").first().json.body;\nconst submittedAt = webhook.submittedAt ?? new Date().toISOString();\nconst sourceImageUrl = webhook.receipt?.url ?? null;\nconst receiptId = extracted.order_id ?? `receipt_${Date.now()}`;\nconst dedupeKey = [extracted.merchant ?? '', extracted.order_id ?? '', extracted.payment?.total_vnd ?? '', extracted.order_time ?? ''].join('|');\n\nreturn [{\n  json: {\n    receipt_id: receiptId,\n    source_image_url: sourceImageUrl,\n    source_file_id: '',\n    merchant: extracted.merchant ?? null,\n    order_status: extracted.order_status ?? null,\n    order_time: extracted.order_time ?? null,\n    delivery_time: extracted.delivery_time ?? null,\n    total_vnd: extracted.payment?.total_vnd ?? null,\n    amount_paid_vnd: extracted.payment?.amount_paid_vnd ?? null,\n    amount_due_vnd: extracted.payment?.amount_due_vnd ?? null,\n    payment_method: '',\n    shipping_address: '',\n    note: webhook.note ?? '',\n    raw_json: JSON.stringify(extracted),\n    created_at: submittedAt,\n    updated_at: submittedAt,\n    dedupe_key: dedupeKey,\n    items: Array.isArray(extracted.items) ? extracted.items : []\n  }\n}];"
+        "jsCode": "const responseText = $input.first().json.output?.[0]?.content?.[0]?.text;\nconst base = $('Build outcome catalogs').first().json;\n\nif (!responseText) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Outcome extraction returned no structured response.' } }];\n}\n\nconst extracted = JSON.parse(responseText);\nconst amount = Number(extracted.amount);\nconst note = String(extracted.note ?? '').trim();\nconst allowedAccounts = new Set((base.account_options ?? []).map((option) => option.value));\nconst allowedCategories = new Set((base.category_options ?? []).map((option) => option.value));\nconst extractedAccountId = extracted.account_id ? String(extracted.account_id).trim() : null;\nconst extractedCategory = extracted.category ? String(extracted.category).trim() : null;\n\nif (!Number.isFinite(amount) || amount <= 0) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Could not determine a valid amount from the outcome message.' } }];\n}\n\nif (!note) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Could not determine a description for the outcome message.' } }];\n}\n\nconst normalizedAccountId = extractedAccountId && allowedAccounts.has(extractedAccountId) ? extractedAccountId : null;\nconst normalizedCategory = extractedCategory && allowedCategories.has(extractedCategory) ? extractedCategory : '';\n\nconst baseTransaction = {\n  transaction_id: `txn_${Date.now()}`,\n  date_time: base.submittedAt,\n  account_id: null,\n  amount,\n  category: normalizedCategory,\n  type: 'expense',\n  provider_reference: base.originalMessage,\n  receipt_id: '',\n  note\n};\n\nif (!normalizedAccountId) {\n  return [{\n    json: {\n      route: 'respond',\n      status: 'needs_account',\n      pending_id: baseTransaction.transaction_id,\n      prompt: 'Which account was used for this transaction?',\n      draft: baseTransaction,\n      account_options: base.account_options,\n      warning: normalizedCategory ? '' : 'Category was not confidently matched and was left blank.'\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    route: 'write',\n    transaction: {\n      ...baseTransaction,\n      account_id: normalizedAccountId\n    },\n    warning: normalizedCategory ? '' : 'Category was not confidently matched and was left blank.'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        544,
-        1120
+        3936,
+        2384
       ],
-      "id": "6d543bef-fdb9-401d-b450-d349fd33f8de",
+      "id": "9058a36f-3c16-483f-94fa-e34b84631af3",
+      "name": "Prepare extracted outcome"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "write",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "8540e24c-6550-40ae-9e59-ad26737e5257"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "write"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "respond",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "10201b65-fa0c-4db1-ae46-93a9d89f1235"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "respond"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        4192,
+        2384
+      ],
+      "id": "c4d37c7a-6a13-47d1-a477-e4c55dee7e06",
+      "name": "Outcome result switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allowedAccounts = new Set(($json.account_options ?? []).map((option) => option.value));\nconst draft = $json.draft ?? null;\nconst accountId = String($json.account_id ?? '').trim();\n\nif (!draft || !accountId) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Missing draft outcome or account selection.' } }];\n}\n\nif (allowedAccounts.size > 0 && !allowedAccounts.has(accountId)) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Selected account is not supported.' } }];\n}\n\nreturn [{\n  json: {\n    route: 'write',\n    transaction: {\n      ...draft,\n      account_id: accountId\n    },\n    warning: draft.category ? '' : 'Category was not confidently matched and was left blank.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3568,
+        2960
+      ],
+      "id": "f5fa65ac-f80c-44c8-a28a-a6bedcf78213",
+      "name": "Finalize pending outcome"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0",
+          "mode": "list",
+          "cachedResultName": "finance_tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "accounts",
+          "mode": "list",
+          "cachedResultName": "accounts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3104,
+        2960
+      ],
+      "id": "99d16ed5-4cb9-4799-b53c-d62ad73a5274",
+      "name": "Read accounts for outcome finalize",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NwZ0rpVl0rdV0jkP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Prepare outcome mode').first().json;\nconst accountRows = $input.all().map((item) => item.json);\nconst accountOptions = accountRows\n  .filter((row) => row.account_id && row.account_name)\n  .map((row) => ({\n    value: String(row.account_id).trim(),\n    label: String(row.account_name).trim(),\n    description: row.provider ? String(row.provider).trim().slice(0, 100) : undefined\n  }));\n\nreturn [{\n  json: {\n    ...base,\n    account_options: accountOptions\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3328,
+        2960
+      ],
+      "id": "1e62311a-ca12-4bdc-affe-f12a5c4d36a5",
+      "name": "Build finalize account catalog"
+    },
+    {
+      "parameters": {
+        "jsCode": "const transaction = $json.transaction ?? null;\n\nif (!transaction) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Missing transaction payload before sheet write.' } }];\n}\n\nreturn [{ json: { transaction } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4432,
+        2960
+      ],
+      "id": "a101a58b-63d2-496c-a1ab-dd95ff9b37b1",
+      "name": "Finalize transaction payload"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0",
+          "mode": "list",
+          "cachedResultName": "finance_tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "transactions",
+          "mode": "list",
+          "cachedResultName": "transactions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "transaction_id": "={{ $json.transaction.transaction_id }}",
+            "date_time": "={{ $json.transaction.date_time }}",
+            "account_id": "={{ $json.transaction.account_id }}",
+            "amount": "={{ $json.transaction.amount }}",
+            "category": "={{ $json.transaction.category }}",
+            "type": "={{ $json.transaction.type }}",
+            "provider_reference": "={{ $json.transaction.provider_reference }}",
+            "receipt_id": "={{ $json.transaction.receipt_id }}",
+            "note": "={{ $json.transaction.note }}"
+          },
+          "matchingColumns": [
+            "transaction_id"
+          ],
+          "schema": [
+            {
+              "id": "transaction_id",
+              "displayName": "transaction_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date_time",
+              "displayName": "date_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "account_id",
+              "displayName": "account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "provider_reference",
+              "displayName": "provider_reference",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "receipt_id",
+              "displayName": "receipt_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "note",
+              "displayName": "note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4736,
+        2960
+      ],
+      "id": "885bcdd9-19d2-4891-95a2-dd62740e3070",
+      "name": "Append transaction row",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NwZ0rpVl0rdV0jkP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aiproxy.moreshared.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-6nsFYn2tmcijnY6Wx"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-5.4\",\n  \"input\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"input_text\",\n          \"text\": \"Extract order details from this image. Return only data matching the provided schema. Convert values like '23.120đ' to integer VND values such as 23120. Use null for fields that are not clearly visible.\"\n        },\n        {\n          \"type\": \"input_image\",\n          \"image_url\": \"{{$json.body.receipt.url}}\"\n        }\n      ]\n    }\n  ],\n  \"text\": {\n    \"format\": {\n      \"type\": \"json_schema\",\n      \"name\": \"bach_hoa_xanh_order\",\n      \"strict\": true,\n      \"schema\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"merchant\": { \"type\": [\"string\", \"null\"] },\n          \"order_status\": { \"type\": [\"string\", \"null\"] },\n          \"order_id\": { \"type\": [\"string\", \"null\"] },\n          \"order_time\": { \"type\": [\"string\", \"null\"] },\n          \"items\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"additionalProperties\": false,\n              \"properties\": {\n                \"name\": { \"type\": [\"string\", \"null\"] },\n                \"quantity\": { \"type\": [\"number\", \"null\"] },\n                \"price_vnd\": { \"type\": [\"number\", \"null\"] }\n              },\n              \"required\": [\"name\", \"quantity\", \"price_vnd\"]\n            }\n          },\n          \"payment\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n              \"total_vnd\": { \"type\": [\"number\", \"null\"] },\n              \"amount_paid_vnd\": { \"type\": [\"number\", \"null\"] },\n              \"amount_due_vnd\": { \"type\": [\"number\", \"null\"] }\n            },\n            \"required\": [\"total_vnd\", \"amount_paid_vnd\", \"amount_due_vnd\"]\n          },\n          \"reward_points_vnd\": { \"type\": [\"number\", \"null\"] }\n        },\n        \"required\": [\n          \"merchant\",\n          \"order_status\",\n          \"order_id\",\n          \"order_time\",\n          \"items\",\n          \"payment\",\n          \"reward_points_vnd\"\n        ]\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2656,
+        1952
+      ],
+      "id": "a2b90d8c-8444-4a3b-b729-c5a829d2c6e5",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const extracted = JSON.parse($input.first().json.output[0].content[0].text);\nconst webhook = $(\"Webhook get receipt image\").first().json.body;\nconst submittedAt = webhook.submittedAt ?? new Date().toISOString();\nconst receiptId = extracted.order_id ?? `receipt_${Date.now()}`;\nconst dedupeKey = [extracted.merchant ?? '', extracted.order_id ?? '', extracted.payment?.total_vnd ?? '', extracted.order_time ?? ''].join('|');\n\nreturn [{\n  json: {\n    receipt_id: receiptId,\n    source_file_id: '',\n    merchant: extracted.merchant ?? null,\n    order_status: extracted.order_status ?? null,\n    order_time: extracted.order_time ?? null,\n    total_vnd: extracted.payment?.total_vnd ?? null,\n    amount_paid_vnd: extracted.payment?.amount_paid_vnd ?? null,\n    amount_due_vnd: extracted.payment?.amount_due_vnd ?? null,\n    payment_method: '',\n    note: webhook.note ?? '',\n    created_at: submittedAt,\n    updated_at: submittedAt,\n    dedupe_key: dedupeKey,\n    items: Array.isArray(extracted.items) ? extracted.items : []\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2912,
+        1952
+      ],
+      "id": "0a21298b-e5c9-4f73-87e1-09f951e09991",
       "name": "Code in JavaScript"
     },
     {
@@ -193,7 +652,7 @@
         "genericAuthType": "httpBasicAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"source\": {\n    \"url\": \"{{ $json.source_image_url }}\"\n  }\n}",
+        "jsonBody": "={\n  \"source\": {\n    \"url\": \"{{ $('Webhook get receipt image').first().json.body.receipt.url }}\"\n  }\n}",
         "options": {
           "redirect": {
             "redirect": {}
@@ -203,10 +662,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        784,
-        992
+        3168,
+        1952
       ],
-      "id": "a7d87d66-f650-4d1a-aac9-e0a6b22041fa",
+      "id": "25c671d8-7ac6-490b-ad42-da43aca8c1ee",
       "name": "Compress receipt image with Tinify",
       "credentials": {
         "httpBasicAuth": {
@@ -223,10 +682,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        992,
-        992
+        3376,
+        1952
       ],
-      "id": "49471171-9c69-46e7-b12b-da48579413d4",
+      "id": "7c76e9e1-6cc8-4b0d-a9d9-2d7609c1a73c",
       "name": "Download compressed receipt image"
     },
     {
@@ -253,10 +712,10 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        1248,
-        992
+        3632,
+        1952
       ],
-      "id": "c0458060-0bee-4cf6-b9c8-934ad8b0013e",
+      "id": "856946d5-973f-487e-9b67-ea96fe7dd5b1",
       "name": "Upload compressed receipt to Drive",
       "credentials": {
         "googleDriveOAuth2Api": {
@@ -267,15 +726,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const base = $('Code in JavaScript').first().json;\nconst drive = $json;\n\nreturn [{\n  json: {\n    ...base,\n    source_file_id: drive.id ?? '',\n    source_image_url: drive.webViewLink ?? drive.webContentLink ?? base.source_image_url,\n    updated_at: new Date().toISOString()\n  }\n}];"
+        "jsCode": "const base = $('Code in JavaScript').first().json;\nconst drive = $json;\n\nreturn [{\n  json: {\n    ...base,\n    source_file_id: drive.id ?? '',\n    updated_at: new Date().toISOString()\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1456,
-        992
+        3840,
+        1952
       ],
-      "id": "13d3fa6f-b4e0-474a-b5fb-3f1255ad6148",
+      "id": "99c09dc5-6b40-4508-913e-d5b2fe5beef2",
       "name": "Finalize receipt row"
     },
     {
@@ -299,19 +758,15 @@
           "mappingMode": "defineBelow",
           "value": {
             "receipt_id": "={{ $json.receipt_id }}",
-            "source_image_url": "={{ $json.source_image_url }}",
             "source_file_id": "={{ $json.source_file_id }}",
             "merchant": "={{ $json.merchant }}",
             "order_status": "={{ $json.order_status }}",
             "order_time": "={{ $json.order_time }}",
-            "delivery_time": "={{ $json.delivery_time }}",
             "total_vnd": "={{ $json.total_vnd }}",
             "amount_paid_vnd": "={{ $json.amount_paid_vnd }}",
             "amount_due_vnd": "={{ $json.amount_due_vnd }}",
             "payment_method": "={{ $json.payment_method }}",
-            "shipping_address": "={{ $json.shipping_address }}",
             "note": "={{ $json.note }}",
-            "raw_json": "={{ $json.raw_json }}",
             "created_at": "={{ $json.created_at }}",
             "updated_at": "={{ $json.updated_at }}",
             "dedupe_key": "={{ $json.dedupe_key }}"
@@ -328,16 +783,6 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "source_image_url",
-              "displayName": "source_image_url",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
               "removed": false
             },
             {
@@ -373,16 +818,6 @@
             {
               "id": "order_time",
               "displayName": "order_time",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": false
-            },
-            {
-              "id": "delivery_time",
-              "displayName": "delivery_time",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -431,28 +866,8 @@
               "removed": false
             },
             {
-              "id": "shipping_address",
-              "displayName": "shipping_address",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": false
-            },
-            {
               "id": "note",
               "displayName": "note",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": false
-            },
-            {
-              "id": "raw_json",
-              "displayName": "raw_json",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -499,10 +914,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        928,
-        1232
+        4048,
+        1952
       ],
-      "id": "02b5a3ef-c519-453c-b69a-b927544791e1",
+      "id": "fcae5dcd-6763-49e2-a579-182390908e5a",
       "name": "Append or update row in sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -513,15 +928,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const receipt = $input.first().json;\nconst items = Array.isArray(receipt.items) ? receipt.items : [];\n\nreturn items.map((item, index) => ({\n  json: {\n    item_id: `${receipt.receipt_id}:${index + 1}`,\n    receipt_id: receipt.receipt_id,\n    item_name: item?.name ?? null,\n    quantity: item?.quantity ?? null,\n    price_vnd: item?.price_vnd ?? null,\n    line_total_vnd: typeof item?.quantity === 'number' && typeof item?.price_vnd === 'number' ? item.quantity * item.price_vnd : null,\n    raw_item_json: JSON.stringify(item ?? null)\n  }\n}));"
+        "jsCode": "const receipt = $input.first().json;\nconst items = Array.isArray(receipt.items) ? receipt.items : [];\n\nreturn items.map((item, index) => ({\n  json: {\n    item_id: `${receipt.receipt_id}:${index + 1}`,\n    receipt_id: receipt.receipt_id,\n    item_name: item?.name ?? null,\n    quantity: item?.quantity ?? null,\n    price_vnd: item?.price_vnd ?? null,\n    line_total_vnd: typeof item?.quantity === 'number' && typeof item?.price_vnd === 'number' ? item.quantity * item.price_vnd : null\n  }\n}));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1152,
-        1232
+        4288,
+        1952
       ],
-      "id": "c04bda1a-6b76-41a1-9970-0f7a9fc0f219",
+      "id": "1f6e9bb4-8995-4f5c-8711-f65467be0976",
       "name": "Flatten receipt items"
     },
     {
@@ -549,8 +964,7 @@
             "item_name": "={{ $json.item_name }}",
             "quantity": "={{ $json.quantity }}",
             "price_vnd": "={{ $json.price_vnd }}",
-            "line_total_vnd": "={{ $json.line_total_vnd }}",
-            "raw_item_json": "={{ $json.raw_item_json }}"
+            "line_total_vnd": "={{ $json.line_total_vnd }}"
           },
           "matchingColumns": [
             "item_id"
@@ -615,16 +1029,6 @@
               "type": "number",
               "canBeUsedToMatch": false,
               "removed": false
-            },
-            {
-              "id": "raw_item_json",
-              "displayName": "raw_item_json",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -635,10 +1039,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        1344,
-        1232
+        4544,
+        1952
       ],
-      "id": "ca7606eb-ebc2-43dd-822c-a20d09774d58",
+      "id": "bd8a4afb-25ac-4c6c-85f1-e81b01064f08",
       "name": "Append or update receipt items row",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -658,10 +1062,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        304,
-        1536
+        2624,
+        3392
       ],
-      "id": "f2830dee-2af8-4e62-a24a-704bf0e37691",
+      "id": "a8aa00d8-ec67-4aff-8863-62006d6af396",
       "name": "Respond invalid webhook"
     },
     {
@@ -671,16 +1075,16 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        576,
-        1328
+        4448,
+        3376
       ],
-      "id": "e0eb905c-f46f-462a-94fb-1c86362023b8",
+      "id": "d4573280-5740-47cb-9162-dd43ee0c52de",
       "name": "Respond outcome webhook"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, receipt_id: $json.receipt_id, source_file_id: $json.source_file_id, source_image_url: $json.source_image_url } }}",
+        "responseBody": "={{ { status: 'complete', transaction: $('Finalize transaction payload').first().json.transaction, warning: $json.warning || '' } }}",
         "options": {
           "responseCode": 200
         }
@@ -688,11 +1092,59 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1568,
-        1232
+        5008,
+        2960
       ],
-      "id": "056692e9-d4e2-4ed9-8ca1-c89e183194bd",
+      "id": "7ec319aa-efcc-4091-902f-e28ef1e0bc0b",
+      "name": "Respond outcome success"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, receipt_id: $json.receipt_id, source_file_id: $json.source_file_id } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        4784,
+        1952
+      ],
+      "id": "30a3d8ce-aafa-42cb-b59e-96ec0f0d91b3",
       "name": "Respond receipt success"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0",
+          "mode": "list",
+          "cachedResultName": "finance_tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "categories"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3120,
+        2480
+      ],
+      "id": "2131c272-4236-4ab1-9290-e1530303479c",
+      "name": "Read categories for outcome extract",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NwZ0rpVl0rdV0jkP",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "pinData": {
@@ -938,7 +1390,7 @@
         ],
         [
           {
-            "node": "Edit Fields",
+            "node": "Prepare outcome mode",
             "type": "main",
             "index": 0
           }
@@ -1051,11 +1503,169 @@
         ]
       ]
     },
-    "Edit Fields": {
+    "Prepare outcome mode": {
       "main": [
         [
           {
+            "node": "Outcome mode switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outcome mode switch": {
+      "main": [
+        [
+          {
+            "node": "Read accounts for outcome extract",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read categories for outcome extract",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read accounts for outcome finalize",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Respond outcome webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read accounts for outcome extract": {
+      "main": [
+        [
+          {
+            "node": "Build outcome catalogs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build outcome catalogs": {
+      "main": [
+        [
+          {
+            "node": "Extract outcome with AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract outcome with AI": {
+      "main": [
+        [
+          {
+            "node": "Prepare extracted outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare extracted outcome": {
+      "main": [
+        [
+          {
+            "node": "Outcome result switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outcome result switch": {
+      "main": [
+        [
+          {
+            "node": "Finalize transaction payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond outcome webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read accounts for outcome finalize": {
+      "main": [
+        [
+          {
+            "node": "Build finalize account catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build finalize account catalog": {
+      "main": [
+        [
+          {
+            "node": "Finalize pending outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize pending outcome": {
+      "main": [
+        [
+          {
+            "node": "Finalize transaction payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize transaction payload": {
+      "main": [
+        [
+          {
+            "node": "Append transaction row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append transaction row": {
+      "main": [
+        [
+          {
+            "node": "Respond outcome success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read categories for outcome extract": {
+      "main": [
+        [
+          {
+            "node": "Build outcome catalogs",
             "type": "main",
             "index": 0
           }
@@ -1068,7 +1678,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "2be5df5d-fc24-47a0-8822-916b53520332",
+  "versionId": "5e9a1e03-bc10-423d-83af-4b7640c3d8c3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ece3ee2dfa1bf7ba55c96e1d4f222c23bf9f007e1f643705a900ecde69796ebf"

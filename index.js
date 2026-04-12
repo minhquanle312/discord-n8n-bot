@@ -2,7 +2,14 @@ require("dotenv").config();
 
 const express = require("express");
 const axios = require("axios");
-const { Client, GatewayIntentBits, Events } = require("discord.js");
+const {
+  ActionRowBuilder,
+  Client,
+  Events,
+  GatewayIntentBits,
+  MessageFlags,
+  StringSelectMenuBuilder,
+} = require("discord.js");
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
@@ -10,6 +17,9 @@ const client = new Client({
 
 const app = express();
 app.use(express.json());
+
+const pendingOutcomes = new Map();
+const PENDING_OUTCOME_TTL_MS = 15 * 60 * 1000;
 
 app.get("/healthz", (_req, res) => {
   res.status(200).json({ ok: true });
@@ -26,40 +36,121 @@ async function sendToN8n(payload) {
     throw new Error("N8N_WEBHOOK_TOKEN is not configured.");
   }
 
-  await axios.post(process.env.N8N_WEBHOOK_URL, payload, {
+  const response = await axios.post(process.env.N8N_WEBHOOK_URL, payload, {
     headers: {
       "Content-Type": "application/json",
       "x-discord-key": webhookToken,
     },
     timeout: 30000,
   });
+
+  return response.data;
 }
 
-function parseOutcomeMessage(message) {
-  const trimmedMessage = message.trim();
-  const match = trimmedMessage.match(/^(\S+)\s+(\d+(?:\.\d+)?)\s+(.+)$/u);
+function cleanupExpiredPendingOutcomes() {
+  const now = Date.now();
 
-  if (!match) {
-    throw new Error(
-      "Invalid outcome format. Use: <account> <amount> <description>",
-    );
+  for (const [pendingId, entry] of pendingOutcomes.entries()) {
+    if (entry.expiresAt <= now) {
+      pendingOutcomes.delete(pendingId);
+    }
+  }
+}
+
+function createAccountSelectionRow(pendingId, accountOptions) {
+  const options = accountOptions.slice(0, 25).map((option) => ({
+    label: String(option.label ?? option.value ?? "Unknown").slice(0, 100),
+    value: String(option.value ?? option.label ?? "unknown").slice(0, 100),
+    description: option.description
+      ? String(option.description).slice(0, 100)
+      : undefined,
+  }));
+
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`out-account:${pendingId}`)
+      .setPlaceholder("Select the payment account")
+      .addOptions(options),
+  );
+}
+
+function formatCurrency(amount) {
+  if (!Number.isFinite(amount)) {
+    return "unknown amount";
   }
 
-  const [, account, amountText, description] = match;
-  const amount = Number(amountText);
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("Amount must be a positive number.");
-  }
-
-  return {
-    account,
-    amount,
-    description: description.trim(),
-  };
+  return `${new Intl.NumberFormat("en-US").format(amount)} VND`;
 }
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  cleanupExpiredPendingOutcomes();
+
+  if (interaction.isStringSelectMenu()) {
+    if (!interaction.customId.startsWith("out-account:")) {
+      return;
+    }
+
+    const pendingId = interaction.customId.replace("out-account:", "");
+    const pendingOutcome = pendingOutcomes.get(pendingId);
+
+    if (!pendingOutcome || pendingOutcome.userId !== interaction.user.id) {
+      await interaction.update({
+        content:
+          "This pending outcome request is no longer available. Please run `/out` again.",
+        components: [],
+      });
+      return;
+    }
+
+    await interaction.update({
+      content: "Got it. Saving your transaction...",
+      components: [],
+    });
+
+    try {
+      const response = await sendToN8n({
+        command: "out",
+        mode: "finalize",
+        submittedAt: pendingOutcome.draft.date_time,
+        outcome: {
+          draft: pendingOutcome.draft,
+          account_id: interaction.values[0],
+        },
+      });
+
+      if (response?.status !== "complete") {
+        throw new Error(response?.message || "Unable to finalize the outcome.");
+      }
+
+      pendingOutcomes.delete(pendingId);
+
+      const transaction = response.transaction ?? {};
+
+      await interaction.editReply({
+        content:
+          `Saved outcome successfully. ` +
+          `[account: ${transaction.account_id}] ` +
+          `[amount: ${formatCurrency(Number(transaction.amount))}] ` +
+          `[category: ${transaction.category || "(blank)"}] ` +
+          `[note: ${transaction.note || pendingOutcome.draft.note}]` +
+          (response?.warning ? `\nWarning: ${response.warning}` : ""),
+        components: [],
+      });
+    } catch (error) {
+      console.error(
+        "Error finalizing outcome via n8n:",
+        error?.response?.data || error.message,
+      );
+
+      await interaction.editReply({
+        content: "Failed to save the transaction. Please run `/out` again.",
+        components: [],
+      });
+    }
+
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === "receipt") {
@@ -70,13 +161,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (!image.contentType || !image.contentType.startsWith("image/")) {
       return interaction.reply({
         content: "Please upload a valid image file for the receipt.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     await interaction.reply({
       content: "Processing your receipt...",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     try {
@@ -97,7 +188,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await interaction.followUp({
         content: "Receipt sent to processing workflow successfully.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } catch (error) {
       console.error(
@@ -108,7 +199,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await interaction.followUp({
         content:
           "Failed to send receipt to processing workflow. Please try again.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -118,42 +209,75 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.commandName === "out") {
     const message = interaction.options.getString("message", true);
 
-    let parsedOutcome;
-
     try {
-      parsedOutcome = parseOutcomeMessage(message);
-    } catch (error) {
-      return interaction.reply({
-        content:
-          'Invalid format. Use `/out message:"cash 12000 đi biển với team anh Sơn"`.',
-        ephemeral: true,
-      });
-    }
+      console.log(
+        `[interaction] acknowledging /out id=${interaction.id} user=${interaction.user.id}`,
+      );
 
-    const { account, amount, description } = parsedOutcome;
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    await interaction.reply({
-      content: "Processing your outcome...",
-      ephemeral: true,
-    });
+      console.log(`[interaction] deferred /out id=${interaction.id}`);
 
-    try {
-      const payload = {
+      const response = await sendToN8n({
         command: "out",
+        mode: "extract",
         outcome: {
-          account,
-          amount,
-          description,
           originalMessage: message,
         },
+        discordContext: {
+          userId: interaction.user.id,
+          channelId: interaction.channelId,
+          guildId: interaction.guildId,
+        },
         submittedAt: new Date().toISOString(),
-      };
+      });
 
-      await sendToN8n(payload);
+      if (response?.status === "needs_account") {
+        const pendingId = response.pending_id;
+        const draft = response.draft;
+        const accountOptions = Array.isArray(response.account_options)
+          ? response.account_options
+          : [];
 
-      await interaction.followUp({
-        content: `Outcome sent successfully: [account: ${account}] [amount: ${amount}] [description: ${description}]`,
-        ephemeral: true,
+        if (!pendingId || !draft || accountOptions.length === 0) {
+          throw new Error(
+            response?.message || "The workflow did not return usable clarification data.",
+          );
+        }
+
+        pendingOutcomes.set(pendingId, {
+          userId: interaction.user.id,
+          expiresAt: Date.now() + PENDING_OUTCOME_TTL_MS,
+          draft,
+        });
+
+        await interaction.editReply({
+          content:
+            `${response.prompt || "Which account was used for this transaction?"}\n\n` +
+            `Detected amount: ${formatCurrency(Number(draft.amount))}\n` +
+            `Detected note: ${draft.note}\n` +
+            `Detected category: ${draft.category || "(blank)"}` +
+            (response.warning ? `\nWarning: ${response.warning}` : ""),
+          components: [createAccountSelectionRow(pendingId, accountOptions)],
+        });
+
+        return;
+      }
+
+      if (response?.status !== "complete") {
+        throw new Error(response?.message || "Unable to process the outcome message.");
+      }
+
+      const transaction = response.transaction ?? {};
+
+      await interaction.editReply({
+        content:
+          `Saved outcome successfully. ` +
+          `[account: ${transaction.account_id}] ` +
+          `[amount: ${formatCurrency(Number(transaction.amount))}] ` +
+          `[category: ${transaction.category || "(blank)"}] ` +
+          `[note: ${transaction.note}]` +
+          (response?.warning ? `\nWarning: ${response.warning}` : ""),
       });
     } catch (error) {
       console.error(
@@ -161,10 +285,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
         error?.response?.data || error.message,
       );
 
-      await interaction.followUp({
-        content: "Failed to send outcome. Please try again.",
-        ephemeral: true,
-      });
+      try {
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply({
+            content:
+              error?.response?.data?.message ||
+              "Failed to process the outcome. Please try again.",
+          });
+        } else {
+          await interaction.reply({
+            content:
+              error?.response?.data?.message ||
+              "Failed to process the outcome. Please try again.",
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+      } catch (replyError) {
+        console.error(
+          "Failed to send /out error response:",
+          replyError?.response?.data || replyError.message,
+        );
+      }
     }
   }
 });
