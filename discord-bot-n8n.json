@@ -12,10 +12,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1184,
-        -224
+        -464,
+        1344
       ],
-      "id": "e754216c-0334-4381-8dc4-d7d0934ee612",
+      "id": "ad0716d4-c686-4450-801e-3c4dfcac9d4b",
       "name": "Webhook get receipt image",
       "webhookId": "dda71a60-b186-4f74-aa60-70c8523b8fec",
       "credentials": {
@@ -33,10 +33,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1040,
-        -224
+        -224,
+        1328
       ],
-      "id": "3b2d3136-5228-477a-ac32-fb6dccd3b70d",
+      "id": "5e52635d-f169-4457-969d-e176b550a387",
       "name": "Validate webhook payload"
     },
     {
@@ -122,10 +122,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -880,
-        -256
+        -16,
+        1312
       ],
-      "id": "658b17aa-d4a4-4bf1-9900-f783b3bfebb3",
+      "id": "c93973ac-fba4-4d49-b593-43b49272e891",
       "name": "Switch"
     },
     {
@@ -135,10 +135,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -496,
-        -144
+        304,
+        1328
       ],
-      "id": "64fea56d-c723-420b-9086-b80792773248",
+      "id": "b9229b6a-ffd0-4472-a469-311a6414ae82",
       "name": "Edit Fields"
     },
     {
@@ -166,10 +166,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -512,
-        -448
+        288,
+        1120
       ],
-      "id": "2fa36047-65c1-4fd9-9c1b-d27623d4a14b",
+      "id": "74693048-4087-4cb0-a1fa-1283ea5f6c3c",
       "name": "HTTP Request"
     },
     {
@@ -179,85 +179,72 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -256,
-        -448
+        544,
+        1120
       ],
-      "id": "9abf4454-9450-467e-be27-711a3d3de852",
+      "id": "6d543bef-fdb9-401d-b450-d349fd33f8de",
       "name": "Code in JavaScript"
-    },
-    {
-      "parameters": {
-        "url": "={{ $('Webhook get receipt image').first().json.body.receipt.url }}",
-        "responseFormat": "file",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        -32,
-        -576
-      ],
-      "id": "c5448bf9-7cee-4c2b-a482-28d8f31a8d77",
-      "name": "Download original receipt image"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://api.tinify.com/shrink",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "={{ 'Basic ' + Buffer.from('api:' + $env.TINIFY_API_KEY).toString('base64') }}"
-            }
-          ]
-        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
         "sendBody": true,
-        "contentType": "raw",
-        "sendBinaryData": true,
-        "binaryPropertyName": "data",
-        "options": {}
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source\": {\n    \"url\": \"{{ $json.source_image_url }}\"\n  }\n}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        192,
-        -576
+        784,
+        992
       ],
-      "id": "2dbdd634-1a34-4a96-8910-dd43c3d8205b",
-      "name": "Compress receipt image with Tinify"
+      "id": "a7d87d66-f650-4d1a-aac9-e0a6b22041fa",
+      "name": "Compress receipt image with Tinify",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "1FaA5vWS4I1adAwR",
+          "name": "Tinify api key credential"
+        }
+      }
     },
     {
       "parameters": {
         "url": "={{ $json.output.url }}",
-        "responseFormat": "file",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        416,
-        -576
+        992,
+        992
       ],
-      "id": "95c1d57a-f6c0-45c7-a322-6d2781d2dca9",
+      "id": "49471171-9c69-46e7-b12b-da48579413d4",
       "name": "Download compressed receipt image"
     },
     {
       "parameters": {
-        "resource": "file",
-        "operation": "upload",
-        "inputDataFieldName": "data",
         "name": "={{ $binary.data.fileName || `${$('Code in JavaScript').first().json.receipt_id}-compressed.jpg` }}",
         "driveId": {
           "__rl": true,
           "value": "My Drive",
-          "mode": "list"
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
         },
         "folderId": {
           "__rl": true,
-          "value": "root",
-          "mode": "list"
+          "value": "1SFsQYltWBl3_kVYvukqZgG7Z7Q6C8GlB",
+          "mode": "list",
+          "cachedResultName": "receipt",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1SFsQYltWBl3_kVYvukqZgG7Z7Q6C8GlB"
         },
         "options": {
           "simplifyOutput": true
@@ -266,14 +253,14 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        640,
-        -576
+        1248,
+        992
       ],
-      "id": "d81f1972-1d2f-4a1e-a396-5309612667e9",
+      "id": "c0458060-0bee-4cf6-b9c8-934ad8b0013e",
       "name": "Upload compressed receipt to Drive",
       "credentials": {
         "googleDriveOAuth2Api": {
-          "id": "NwZ0rpVl0rdV0jkP",
+          "id": "MV0TDxOz3N1aj4u7",
           "name": "Google Drive account"
         }
       }
@@ -285,10 +272,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        864,
-        -576
+        1456,
+        992
       ],
-      "id": "51a87b32-f7d1-4673-8b6e-91f3475f9f78",
+      "id": "13d3fa6f-b4e0-474a-b5fb-3f1255ad6148",
       "name": "Finalize receipt row"
     },
     {
@@ -512,10 +499,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -48,
-        -448
+        928,
+        1232
       ],
-      "id": "618285e0-aa9c-4a19-840b-04f2159ea1f6",
+      "id": "02b5a3ef-c519-453c-b69a-b927544791e1",
       "name": "Append or update row in sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -531,10 +518,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -48,
-        -240
+        1152,
+        1232
       ],
-      "id": "e73a0708-6d55-4b3b-9f84-6a09f574d965",
+      "id": "c04bda1a-6b76-41a1-9970-0f7a9fc0f219",
       "name": "Flatten receipt items"
     },
     {
@@ -648,10 +635,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        160,
-        -240
+        1344,
+        1232
       ],
-      "id": "e7db8d67-563b-48cd-a4c7-6ec5d90cb640",
+      "id": "ca7606eb-ebc2-43dd-822c-a20d09774d58",
       "name": "Append or update receipt items row",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -671,24 +658,23 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        -656,
-        -48
+        304,
+        1536
       ],
-      "id": "3981fc55-ee42-45b0-a5f4-8670534d15fa",
+      "id": "f2830dee-2af8-4e62-a24a-704bf0e37691",
       "name": "Respond invalid webhook"
     },
     {
       "parameters": {
-        "respondWith": "firstIncomingItem",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        384,
-        -240
+        576,
+        1328
       ],
-      "id": "17711e2a-bac3-46f7-87b3-9db998c7b8f7",
+      "id": "e0eb905c-f46f-462a-94fb-1c86362023b8",
       "name": "Respond outcome webhook"
     },
     {
@@ -702,51 +688,14 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        384,
-        -96
+        1568,
+        1232
       ],
-      "id": "4110f22c-40bc-4f18-a3a8-cf7ec0908af9",
+      "id": "056692e9-d4e2-4ed9-8ca1-c89e183194bd",
       "name": "Respond receipt success"
     }
   ],
   "pinData": {
-    "Webhook get receipt image": [
-      {
-        "json": {
-          "headers": {
-            "host": "n8n.moreshared.com",
-            "user-agent": "axios/1.15.0",
-            "content-length": "647",
-            "accept": "application/json, text/plain, */*",
-            "accept-encoding": "gzip, compress, deflate, br",
-            "content-type": "application/json",
-            "x-discord-key": "kMWMbRwysGw3LCQrblrIidBifDim0IbF9D7SzCSKHQ9t5RoPaOrCBSAGM6h3gHGp",
-            "x-forwarded-for": "14.186.182.27",
-            "x-forwarded-host": "n8n.moreshared.com",
-            "x-forwarded-port": "443",
-            "x-forwarded-proto": "https",
-            "x-forwarded-server": "52683ad975a4",
-            "x-real-ip": "14.186.182.27"
-          },
-          "params": {},
-          "query": {},
-          "body": {
-            "command": "receipt",
-            "receipt": {
-              "url": "https://cdn.discordapp.com/ephemeral-attachments/1492003832287465524/1492043090184114287/Screenshot_20260410_122559_Qu_Tng_VIP.jpg?ex=69d9e4e9&is=69d89369&hm=e0c07fa9dc473588620400c2e6c386ebcbfe54097cfb2edae616842a0df4f0f7&",
-              "proxyUrl": "https://media.discordapp.net/ephemeral-attachments/1492003832287465524/1492043090184114287/Screenshot_20260410_122559_Qu_Tng_VIP.jpg?ex=69d9e4e9&is=69d89369&hm=e0c07fa9dc473588620400c2e6c386ebcbfe54097cfb2edae616842a0df4f0f7&",
-              "name": "Screenshot_20260410_122559_Qu_Tng_VIP.jpg",
-              "size": 107724,
-              "contentType": "image/jpeg"
-            },
-            "note": "",
-            "submittedAt": "2026-04-10T06:06:34.671Z"
-          },
-          "webhookUrl": "https://n8n.moreshared.com/webhook-test/discord-receipt",
-          "executionMode": "test"
-        }
-      }
-    ],
     "HTTP Request": [
       {
         "json": {
@@ -1018,17 +967,6 @@
       "main": [
         [
           {
-            "node": "Download original receipt image",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Download original receipt image": {
-      "main": [
-        [
-          {
             "node": "Compress receipt image with Tinify",
             "type": "main",
             "index": 0
@@ -1125,12 +1063,12 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "b6ad09e5-7c28-44a1-b5b9-5e8f9797bd64",
+  "versionId": "2be5df5d-fc24-47a0-8822-916b53520332",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ece3ee2dfa1bf7ba55c96e1d4f222c23bf9f007e1f643705a900ecde69796ebf"
