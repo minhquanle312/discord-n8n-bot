@@ -263,7 +263,20 @@
     },
     {
       "parameters": {
-        "jsCode": "const base = $('Prepare outcome mode').first().json;\nconst accountRows = $('Read accounts for outcome extract').all().map((item) => item.json);\nconst categoryRows = $input.all().map((item) => item.json);\n\nconst accountOptions = accountRows\n  .filter((row) => row.account_id && row.account_name)\n  .map((row) => ({\n    value: String(row.account_id).trim(),\n    label: String(row.account_name).trim(),\n    description: row.provider ? String(row.provider).trim().slice(0, 100) : undefined\n  }));\n\nconst categoryOptions = categoryRows\n  .filter((row) => row.category_name)\n  .filter((row) => String(row.active ?? 'TRUE').toLowerCase() !== 'false')\n  .map((row) => ({\n    value: String(row.category_name).trim(),\n    label: String(row.category_name).trim(),\n    description: row.parent_category ? `Parent: ${String(row.parent_category).trim()}`.slice(0, 100) : undefined\n  }));\n\nreturn [{\n  json: {\n    ...base,\n    account_options: accountOptions,\n    category_options: categoryOptions,\n    account_catalog_text: accountOptions.length > 0 ? accountOptions.map((option) => `${option.value}: ${option.label}${option.description ? ` (${option.description})` : ''}`).join('; ') : 'No accounts available',\n    category_catalog_text: categoryOptions.length > 0 ? categoryOptions.map((option) => `${option.value}${option.description ? ` (${option.description})` : ''}`).join('; ') : 'No categories available'\n  }\n}];"
+        "mode": "append"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3312,
+        2384
+      ],
+      "id": "f498f62b-b68a-4262-9328-933cf0fda3c8",
+      "name": "Merge outcome catalogs"
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Prepare outcome mode').first().json;\nconst rows = $input.all().map((item) => item.json);\nconst accountRows = rows.filter((row) => row.account_id && row.account_name);\nconst categoryRows = rows.filter((row) => row.category_name);\n\nconst accountOptions = accountRows.map((row) => ({\n  value: String(row.account_id).trim(),\n  label: String(row.account_name).trim(),\n  description: row.provider ? String(row.provider).trim().slice(0, 100) : undefined\n}));\n\nconst categoryOptions = categoryRows\n  .filter((row) => String(row.active ?? 'TRUE').toLowerCase() !== 'false')\n  .map((row) => ({\n    value: String(row.category_name).trim(),\n    label: String(row.category_name).trim(),\n    description: row.parent_category ? `Parent: ${String(row.parent_category).trim()}`.slice(0, 100) : undefined\n  }));\n\nreturn [{\n  json: {\n    ...base,\n    account_options: accountOptions,\n    category_options: categoryOptions,\n    account_catalog_text: accountOptions.length > 0 ? accountOptions.map((option) => `${option.value}: ${option.label}${option.description ? ` (${option.description})` : ''}`).join('; ') : 'No accounts available',\n    category_catalog_text: categoryOptions.length > 0 ? categoryOptions.map((option) => `${option.value}${option.description ? ` (${option.description})` : ''}`).join('; ') : 'No categories available'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -398,6 +411,71 @@
     },
     {
       "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "write",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b81e6e58-5f64-48e2-96de-8e7b626ec0fe"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "write"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "respond",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1b7409f2-1a87-4427-b0b1-ffbff7af7d55"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "respond"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        3808,
+        2960
+      ],
+      "id": "fd7d8c86-1f80-41f7-9e61-68c58282d987",
+      "name": "Finalize outcome switch"
+    },
+    {
+      "parameters": {
         "documentId": {
           "__rl": true,
           "value": "1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0",
@@ -407,10 +485,8 @@
         },
         "sheetName": {
           "__rl": true,
-          "value": "accounts",
-          "mode": "list",
-          "cachedResultName": "accounts",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit"
+          "mode": "name",
+          "value": "accounts"
         },
         "options": {}
       },
@@ -1548,6 +1624,28 @@
       "main": [
         [
           {
+            "node": "Merge outcome catalogs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read categories for outcome extract": {
+      "main": [
+        [
+          {
+            "node": "Merge outcome catalogs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge outcome catalogs": {
+      "main": [
+        [
+          {
             "node": "Build outcome catalogs",
             "type": "main",
             "index": 0
@@ -1632,7 +1730,25 @@
       "main": [
         [
           {
+            "node": "Finalize outcome switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize outcome switch": {
+      "main": [
+        [
+          {
             "node": "Finalize transaction payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond outcome webhook",
             "type": "main",
             "index": 0
           }
@@ -1655,17 +1771,6 @@
         [
           {
             "node": "Respond outcome success",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read categories for outcome extract": {
-      "main": [
-        [
-          {
-            "node": "Build outcome catalogs",
             "type": "main",
             "index": 0
           }
