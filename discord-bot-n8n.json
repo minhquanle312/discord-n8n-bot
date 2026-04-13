@@ -12,10 +12,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        8640,
-        6496
+        15168,
+        8656
       ],
-      "id": "2ec5ea82-1725-4667-8f7f-d13c2b880c0c",
+      "id": "6e7072cd-50db-40f3-8f26-93574792f568",
       "name": "Webhook get receipt image",
       "webhookId": "dda71a60-b186-4f74-aa60-70c8523b8fec",
       "credentials": {
@@ -33,10 +33,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8880,
-        6480
+        15408,
+        8640
       ],
-      "id": "fda83994-300d-4473-b45e-56137a7aa82f",
+      "id": "08afbdaa-714b-47b8-8355-811e458785c1",
       "name": "Validate webhook payload"
     },
     {
@@ -122,23 +122,23 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        9088,
-        6464
+        15616,
+        8624
       ],
-      "id": "89696bef-2e2d-43d1-8190-3888a4746c78",
+      "id": "f532510c-a7ce-49f8-bef2-6ce8a5d0e3e2",
       "name": "Switch"
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body ?? {};\n\nconst pad = (value) => String(value).padStart(2, '0');\nconst formatDateTime = (value) => {\n  const raw = String(value ?? '').trim();\n\n  if (!raw) {\n    const now = new Date();\n    return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;\n  }\n\n  const alreadyFormatted = raw.match(/^(\\d{2})\/(\\d{2})\/(\\d{4}) (\\d{2}):(\\d{2})$/);\n  if (alreadyFormatted) {\n    return raw;\n  }\n\n  const isoDate = new Date(raw);\n  if (!Number.isNaN(isoDate.getTime())) {\n    const formatted = new Intl.DateTimeFormat('en-GB', {\n      timeZone: 'Asia/Saigon',\n      day: '2-digit',\n      month: '2-digit',\n      year: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit',\n      hour12: false\n    }).formatToParts(isoDate).reduce((acc, part) => {\n      if (part.type !== 'literal') acc[part.type] = part.value;\n      return acc;\n    }, {});\n\n    return `${formatted.day}/${formatted.month}/${formatted.year} ${formatted.hour}:${formatted.minute}`;\n  }\n\n  const slashDate = raw.match(/^(\\d{1,2})\/(\\d{1,2})\/(\\d{4})(?:[ T](\\d{1,2}):(\\d{2}))?$/);\n  if (slashDate) {\n    const [, day, month, year, hour = '00', minute = '00'] = slashDate;\n    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${minute}`;\n  }\n\n  return raw;\n};\n\nconst submittedAt = formatDateTime(body.submittedAt ?? new Date().toISOString());\n\nif ((body.command ?? null) !== 'out') {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Unsupported outcome request.' } }];\n}\n\nif (body.mode === 'finalize') {\n  const draft = body.outcome?.draft ?? null;\n  const accountId = body.outcome?.account_id ?? null;\n\n  if (!draft || !accountId) {\n    return [{ json: { route: 'respond', status: 'invalid', message: 'Missing pending outcome draft or account selection.' } }];\n  }\n\n  return [{ json: { route: 'finalize', submittedAt, draft, account_id: accountId } }];\n}\n\nconst originalMessage = String(body.outcome?.originalMessage ?? '').trim();\n\nif (!originalMessage) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Outcome originalMessage is required.' } }];\n}\n\nreturn [{\n  json: {\n    route: 'extract',\n    submittedAt,\n    originalMessage,\n    discordContext: body.discordContext ?? {}\n  }\n}];"
+        "jsCode": "const body = $json.body ?? {};\n\nconst pad = (value) => String(value).padStart(2, '0');\n\nconst formatDateTime = (value) => {\n  const raw = String(value ?? '').trim();\n  if (!raw) {\n    const now = new Date();\n    return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;\n  }\n\n  const alreadyFormatted = raw.match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4}) (\\d{2}):(\\d{2})$/);\n  if (alreadyFormatted) return raw;\n\n  const isoDate = new Date(raw);\n  if (!Number.isNaN(isoDate.getTime())) {\n    const formatted = new Intl.DateTimeFormat('en-GB', {\n      timeZone: 'Asia/Saigon',\n      day: '2-digit',\n      month: '2-digit',\n      year: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit',\n      hour12: false\n    }).formatToParts(isoDate).reduce((acc, part) => {\n      if (part.type !== 'literal') acc[part.type] = part.value;\n      return acc;\n    }, {});\n    return `${formatted.day}/${formatted.month}/${formatted.year} ${formatted.hour}:${formatted.minute}`;\n  }\n\n  const slashDate = raw.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})(?:[ T](\\d{1,2}):(\\d{2}))?$/);\n  if (slashDate) {\n    const [, day, month, year, hour = '00', minute = '00'] = slashDate;\n    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${minute}`;\n  }\n\n  return raw;\n};\n\nconst submittedAt = formatDateTime(body.submittedAt ?? new Date().toISOString());\n\nif ((body.command ?? null) !== 'out') {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Unsupported outcome request.' } }];\n}\n\nif (body.mode === 'finalize') {\n  const draft = body.outcome?.draft ?? null;\n  const accountId = body.outcome?.account_id ?? null;\n  if (!draft || !accountId) {\n    return [{ json: { route: 'respond', status: 'invalid', message: 'Missing pending outcome draft or account selection.' } }];\n  }\n  return [{ json: { route: 'finalize', submittedAt, draft, account_id: accountId } }];\n}\n\nconst originalMessage = String(body.outcome?.originalMessage ?? '').trim();\nif (!originalMessage) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Outcome originalMessage is required.' } }];\n}\n\nreturn [{\n  json: {\n    route: 'extract',\n    submittedAt,\n    originalMessage,\n    discordContext: body.discordContext ?? {}\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        9424,
-        6704
+        15952,
+        8864
       ],
-      "id": "ad248c92-1b9f-4f47-8f80-1fc7c280c63b",
+      "id": "ba7a4793-e477-4d2d-9719-00393bc0e369",
       "name": "Prepare outcome mode"
     },
     {
@@ -224,10 +224,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        9664,
-        6688
+        16192,
+        8848
       ],
-      "id": "c534cd52-d4da-4142-9fb5-5d3145e77059",
+      "id": "752990df-d448-433e-b7ea-3cf96eaac0ac",
       "name": "Outcome mode switch"
     },
     {
@@ -249,10 +249,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        9920,
-        6288
+        16448,
+        8448
       ],
-      "id": "d055fecc-3332-4542-8c86-b003b25adabf",
+      "id": "832ff341-534b-4f1e-88c8-96d2cc0a97f8",
       "name": "Read accounts for outcome extract",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -266,10 +266,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        10112,
-        6400
+        16640,
+        8560
       ],
-      "id": "d8098842-033a-48b4-bd3b-65ce3c4eda48",
+      "id": "3856dafc-86ec-47fb-9dc3-e0aab7e3daaf",
       "name": "Merge outcome catalogs"
     },
     {
@@ -279,10 +279,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        10304,
-        6400
+        16832,
+        8560
       ],
-      "id": "f7ee1214-3b94-437a-9ce5-b468a2d885d8",
+      "id": "15b88afe-20c1-46c4-bc68-b1123d6a84ae",
       "name": "Build outcome catalogs"
     },
     {
@@ -310,10 +310,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        10528,
-        6400
+        17056,
+        8560
       ],
-      "id": "0def88dc-5e2b-464a-936f-5b1c25744ad3",
+      "id": "9d2b9f5e-09c8-4788-884b-318ea465c42a",
       "name": "Extract outcome with AI"
     },
     {
@@ -323,10 +323,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        10736,
-        6400
+        17264,
+        8560
       ],
-      "id": "bfc1c549-2b6f-41fd-bc90-f28a903ab755",
+      "id": "7cfb44d8-c25e-4c9a-b9e7-f6f596b9e05f",
       "name": "Prepare extracted outcome"
     },
     {
@@ -388,10 +388,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        10992,
-        6400
+        17520,
+        8560
       ],
-      "id": "3b4b8f15-193f-40b1-928d-8fc7158c6eda",
+      "id": "a9ba783b-12f2-4083-9234-d5a7f9837ab9",
       "name": "Outcome result switch"
     },
     {
@@ -401,10 +401,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        10368,
-        6976
+        16896,
+        8864
       ],
-      "id": "d51faf75-8110-4723-aa4d-d9c5c1e7a398",
+      "id": "dc5f7d86-e4d6-44aa-a833-58c2a55af968",
       "name": "Finalize pending outcome"
     },
     {
@@ -466,10 +466,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        10608,
-        6976
+        17136,
+        8864
       ],
-      "id": "dc819f9a-f1f8-410a-bcef-c96c6b686a7e",
+      "id": "e671c8a9-da9f-418f-ac00-deb1291d13a2",
       "name": "Finalize outcome switch"
     },
     {
@@ -491,10 +491,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        9904,
-        6976
+        16432,
+        8864
       ],
-      "id": "282b6a34-f33a-4f36-b291-a74d8bedba19",
+      "id": "0360cb1b-c120-4f2d-8579-e93c7e58a399",
       "name": "Read accounts for outcome finalize",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -510,10 +510,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        10128,
-        6976
+        16656,
+        8864
       ],
-      "id": "b3775259-203a-4581-bb23-0f35168232dd",
+      "id": "af150864-1b14-44b2-8474-87ae66478619",
       "name": "Build finalize account catalog"
     },
     {
@@ -523,10 +523,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        11232,
-        6976
+        17760,
+        8848
       ],
-      "id": "97d86a4e-1036-4453-a685-607cbe04299c",
+      "id": "4bf3aed0-68d9-47aa-b32b-462556a48e0b",
       "name": "Finalize transaction payload"
     },
     {
@@ -660,10 +660,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        11536,
-        6976
+        18064,
+        8848
       ],
-      "id": "b7cde6fa-b4a1-48c8-bdea-8e1142a3bf2c",
+      "id": "4efd56e1-12c3-4387-9068-525cb2c0cb6a",
       "name": "Append transaction row",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -697,23 +697,23 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        9456,
-        5968
+        15984,
+        8128
       ],
-      "id": "1d447abc-e4b3-4d81-a9a6-fc537f63c51f",
+      "id": "f9019c8e-5d47-41ff-ba91-dacbb4f1d119",
       "name": "HTTP Request"
     },
     {
       "parameters": {
-        "jsCode": "const extracted = JSON.parse($input.first().json.output[0].content[0].text);\nconst webhook = $(\"Webhook get receipt image\").first().json.body;\n\nconst pad = (value) => String(value).padStart(2, '0');\nconst formatDateTime = (value) => {\n  const raw = String(value ?? '').trim();\n\n  if (!raw) {\n    return null;\n  }\n\n  const alreadyFormatted = raw.match(/^(\\d{2})\/(\\d{2})\/(\\d{4}) (\\d{2}):(\\d{2})$/);\n  if (alreadyFormatted) {\n    return raw;\n  }\n\n  const receiptStyle = raw.match(/^(\\d{1,2}):(\\d{2}),\\s*(\\d{1,2})\/(\\d{1,2})\/(\\d{4})$/);\n  if (receiptStyle) {\n    const [, hour, minute, day, month, year] = receiptStyle;\n    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${minute}`;\n  }\n\n  const slashDate = raw.match(/^(\\d{1,2})\/(\\d{1,2})\/(\\d{4})(?:[ T](\\d{1,2}):(\\d{2}))?$/);\n  if (slashDate) {\n    const [, day, month, year, hour = '00', minute = '00'] = slashDate;\n    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${minute}`;\n  }\n\n  const isoDate = new Date(raw);\n  if (!Number.isNaN(isoDate.getTime())) {\n    const formatted = new Intl.DateTimeFormat('en-GB', {\n      timeZone: 'Asia/Saigon',\n      day: '2-digit',\n      month: '2-digit',\n      year: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit',\n      hour12: false\n    }).formatToParts(isoDate).reduce((acc, part) => {\n      if (part.type !== 'literal') acc[part.type] = part.value;\n      return acc;\n    }, {});\n\n    return `${formatted.day}/${formatted.month}/${formatted.year} ${formatted.hour}:${formatted.minute}`;\n  }\n\n  return raw;\n};\n\nconst submittedAt = formatDateTime(webhook.submittedAt ?? new Date().toISOString());\nconst orderTime = formatDateTime(extracted.order_time);\nconst receiptId = extracted.order_id ?? `receipt_${Date.now()}`;\nconst dedupeKey = [extracted.merchant ?? '', extracted.order_id ?? '', extracted.payment?.total_vnd ?? '', orderTime ?? ''].join('|');\n\nreturn [{\n  json: {\n    receipt_id: receiptId,\n    source_file_id: '',\n    merchant: extracted.merchant ?? null,\n    order_status: extracted.order_status ?? null,\n    order_time: orderTime,\n    total_vnd: extracted.payment?.total_vnd ?? null,\n    payment_method: '',\n    note: webhook.note ?? '',\n    created_at: submittedAt,\n    dedupe_key: dedupeKey,\n    items: Array.isArray(extracted.items) ? extracted.items : []\n  }\n}];"
+        "jsCode": "const extracted = JSON.parse($input.first().json.output[0].content[0].text);\nconst webhook = $(\"Webhook get receipt image\").first().json.body;\n\nconst pad = (value) => String(value).padStart(2, '0');\n\nconst formatDateTime = (value) => {\n  const raw = String(value ?? '').trim();\n  if (!raw) return null;\n\n  const alreadyFormatted = raw.match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4}) (\\d{2}):(\\d{2})$/);\n  if (alreadyFormatted) return raw;\n\n  const receiptStyle = raw.match(/^(\\d{1,2}):(\\d{2}),\\s*(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  if (receiptStyle) {\n    const [, hour, minute, day, month, year] = receiptStyle;\n    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${minute}`;\n  }\n\n  const slashDate = raw.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})(?:[ T](\\d{1,2}):(\\d{2}))?$/);\n  if (slashDate) {\n    const [, day, month, year, hour = '00', minute = '00'] = slashDate;\n    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${minute}`;\n  }\n\n  const isoDate = new Date(raw);\n  if (!Number.isNaN(isoDate.getTime())) {\n    const formatted = new Intl.DateTimeFormat('en-GB', {\n      timeZone: 'Asia/Saigon',\n      day: '2-digit',\n      month: '2-digit',\n      year: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit',\n      hour12: false\n    }).formatToParts(isoDate).reduce((acc, part) => {\n      if (part.type !== 'literal') acc[part.type] = part.value;\n      return acc;\n    }, {});\n    return `${formatted.day}/${formatted.month}/${formatted.year} ${formatted.hour}:${formatted.minute}`;\n  }\n\n  return raw;\n};\n\nconst submittedAt = formatDateTime(webhook.submittedAt ?? new Date().toISOString());\nconst orderTime = formatDateTime(extracted.order_time);\nconst receiptId = extracted.order_id ?? `receipt_${Date.now()}`;\nconst dedupeKey = [\n  extracted.merchant ?? '',\n  extracted.order_id ?? '',\n  extracted.payment?.total_vnd ?? '',\n  orderTime ?? ''\n].join('|');\n\nreturn [{\n  json: {\n    receipt_id: receiptId,\n    source_file_id: '',\n    merchant: extracted.merchant ?? null,\n    order_status: extracted.order_status ?? null,\n    order_time: orderTime,\n    total_vnd: extracted.payment?.total_vnd ?? null,\n    payment_method: '',\n    note: webhook.note ?? '',\n    created_at: submittedAt,\n    dedupe_key: dedupeKey,\n    items: Array.isArray(extracted.items) ? extracted.items : []\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        9712,
-        5968
+        16240,
+        8128
       ],
-      "id": "e6bdc248-29a9-4879-b53c-53312f8084dd",
+      "id": "a5a0e20f-c630-4204-8e1f-1a8c0ec8f9a1",
       "name": "Code in JavaScript"
     },
     {
@@ -734,10 +734,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        9968,
-        5968
+        16496,
+        8128
       ],
-      "id": "d88a9bcc-6223-44bd-99b5-77407e1f56b5",
+      "id": "ef89f009-f8d9-43c2-87ee-098afda7c60c",
       "name": "Compress receipt image with Tinify",
       "credentials": {
         "httpBasicAuth": {
@@ -754,10 +754,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        10176,
-        5968
+        16704,
+        8128
       ],
-      "id": "77333caf-fa37-43d1-97b6-16162cfc94cd",
+      "id": "b2d13725-b6c7-43b7-bb4e-0a3f4fb43896",
       "name": "Download compressed receipt image"
     },
     {
@@ -784,10 +784,10 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        10432,
-        5968
+        16960,
+        8128
       ],
-      "id": "0a76aaea-5dd0-4436-9f6c-7e97a5386ebf",
+      "id": "8dac0245-a425-4779-9411-785706e4fc67",
       "name": "Upload compressed receipt to Drive",
       "credentials": {
         "googleDriveOAuth2Api": {
@@ -798,15 +798,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const base = $('Code in JavaScript').first().json;\nconst drive = $json;\n\nreturn [{\n  json: {\n    ...base,\n    source_file_id: drive.id ?? ''\n  }\n}];"
+        "jsCode": "const base = $('Code in JavaScript').first().json;\nconst drive = $('Upload compressed receipt to Drive').first().json; // adjust node name as needed\n\nconst receipt = {\n  ...base,\n  source_file_id: drive.id ?? ''\n};\n\nconst items = Array.isArray(receipt.items) ? receipt.items : [];\n\nconst formattedItems = items.map((item, index) => ({\n  item_id: `${receipt.receipt_id}:${index + 1}`,\n  receipt_id: receipt.receipt_id,\n  item_name: item?.name ?? null,\n  quantity: item?.quantity ?? null,\n  price_vnd: item?.price_vnd ?? null,\n  line_total_vnd:\n    typeof item?.quantity === 'number' && typeof item?.price_vnd === 'number'\n      ? item.quantity * item.price_vnd\n      : null\n}));\n\nreturn [{\n  json: {\n    ...receipt,\n    items: formattedItems\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        10640,
-        5968
+        17248,
+        8032
       ],
-      "id": "f664e14b-ffda-4b94-b477-f0e57d45aeb6",
+      "id": "54b77f3c-9ead-401b-a489-688fc9f92c64",
       "name": "Finalize receipt row"
     },
     {
@@ -953,10 +953,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        10848,
-        5968
+        17504,
+        8032
       ],
-      "id": "39c4e753-b49e-41d8-a67b-99ba8a62c9a2",
+      "id": "4d2d9775-6827-4858-b451-c7f9bd885027",
       "name": "Append or update row in sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -967,15 +967,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const receipt = $input.first().json;\nconst items = Array.isArray(receipt.items) ? receipt.items : [];\n\nreturn items.map((item, index) => ({\n  json: {\n    item_id: `${receipt.receipt_id}:${index + 1}`,\n    receipt_id: receipt.receipt_id,\n    item_name: item?.name ?? null,\n    quantity: item?.quantity ?? null,\n    price_vnd: item?.price_vnd ?? null,\n    line_total_vnd: typeof item?.quantity === 'number' && typeof item?.price_vnd === 'number' ? item.quantity * item.price_vnd : null\n  }\n}));"
+        "jsCode": "const receipt = $('Code in JavaScript').first().json;\nconst items = Array.isArray(receipt.items) ? receipt.items : [];\n\nreturn items.map((item, index) => ({\n  json: {\n    item_id: `${receipt.receipt_id}:${index + 1}`,\n    receipt_id: receipt.receipt_id,\n    item_name: item?.name ?? null,\n    quantity: item?.quantity ?? null,\n    price_vnd: item?.price_vnd ?? null,\n    line_total_vnd: typeof item?.quantity === 'number' && typeof item?.price_vnd === 'number'\n      ? item.quantity * item.price_vnd\n      : null\n  }\n}));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        11088,
-        5968
+        17248,
+        8240
       ],
-      "id": "ca372a72-8469-4cce-acee-84b5f3a13288",
+      "id": "1ad64330-d9e3-433c-9758-d8ee257f988e",
       "name": "Flatten receipt items"
     },
     {
@@ -1000,10 +1000,10 @@
           "value": {
             "item_id": "={{ $json.item_id }}",
             "receipt_id": "={{ $json.receipt_id }}",
-            "item_name": "={{ $json.item_name }}",
-            "quantity": "={{ $json.quantity }}",
             "price_vnd": "={{ $json.price_vnd }}",
-            "line_total_vnd": "={{ $json.line_total_vnd }}"
+            "line_total_vnd": "={{ $json.line_total_vnd }}",
+            "item_name": "={{ $json.item_name }}",
+            "quantity": "={{ $json.quantity }}"
           },
           "matchingColumns": [
             "item_id"
@@ -1078,10 +1078,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        11344,
-        5968
+        17504,
+        8240
       ],
-      "id": "2f9fd023-4d84-41d2-8be0-f55457d125c5",
+      "id": "eabe3d43-04d6-4c56-8a41-7778597886a5",
       "name": "Append or update receipt items row",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1101,10 +1101,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        9424,
-        7408
+        15952,
+        9568
       ],
-      "id": "add25caa-2ad8-461b-a32c-0656418cc2e8",
+      "id": "763fb433-f754-45cb-9095-38d94163ffa6",
       "name": "Respond invalid webhook"
     },
     {
@@ -1114,10 +1114,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        11536,
-        6736
+        17648,
+        9872
       ],
-      "id": "c54695bc-d011-4f13-909b-9dbcdbf9755a",
+      "id": "6cc56ca5-697d-4390-b211-f422da64d3ff",
       "name": "Respond outcome webhook"
     },
     {
@@ -1131,10 +1131,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        11808,
-        6976
+        18336,
+        8848
       ],
-      "id": "f3841ac8-b626-4775-84e9-bc87e23ecc51",
+      "id": "7657f029-1d7e-4ed8-a53f-49d73aeb7d15",
       "name": "Respond outcome success"
     },
     {
@@ -1148,10 +1148,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        11584,
-        5968
+        17744,
+        8240
       ],
-      "id": "da361216-4e6b-4475-84e3-f90f844c711f",
+      "id": "82317607-f05b-4918-b988-a885fe7cdbeb",
       "name": "Respond receipt success"
     },
     {
@@ -1173,10 +1173,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        9920,
-        6496
+        16448,
+        8656
       ],
-      "id": "ccdb96b5-cb00-4295-829e-7c8cddf65415",
+      "id": "84780d25-abaa-4c93-a5f6-0ea24b3360fd",
       "name": "Read categories for outcome extract",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1184,6 +1184,23 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, receipt_id: $json.receipt_id, source_file_id: $json.source_file_id } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        17744,
+        8032
+      ],
+      "id": "e3e63ae3-dddf-43dd-9e32-508d5acd6742",
+      "name": "Respond receipt success1"
     }
   ],
   "pinData": {
@@ -1480,6 +1497,11 @@
             "node": "Finalize receipt row",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Flatten receipt items",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -1499,7 +1521,7 @@
       "main": [
         [
           {
-            "node": "Flatten receipt items",
+            "node": "Respond receipt success1",
             "type": "main",
             "index": 0
           }
@@ -1511,17 +1533,6 @@
         [
           {
             "node": "Append or update receipt items row",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Append or update receipt items row": {
-      "main": [
-        [
-          {
-            "node": "Respond receipt success",
             "type": "main",
             "index": 0
           }
@@ -1725,6 +1736,17 @@
           }
         ]
       ]
+    },
+    "Append or update receipt items row": {
+      "main": [
+        [
+          {
+            "node": "Respond receipt success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -1732,7 +1754,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "18e65388-8249-4c5a-b0f2-e96794d4c5bf",
+  "versionId": "5d5a6197-5d7b-4cb8-92d0-7a30b99bd7d4",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ece3ee2dfa1bf7ba55c96e1d4f222c23bf9f007e1f643705a900ecde69796ebf"
