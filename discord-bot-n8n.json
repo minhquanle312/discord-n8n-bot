@@ -130,7 +130,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body ?? {};\nconst submittedAt = body.submittedAt ?? new Date().toISOString();\n\nif ((body.command ?? null) !== 'out') {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Unsupported outcome request.' } }];\n}\n\nif (body.mode === 'finalize') {\n  const draft = body.outcome?.draft ?? null;\n  const accountId = body.outcome?.account_id ?? null;\n\n  if (!draft || !accountId) {\n    return [{ json: { route: 'respond', status: 'invalid', message: 'Missing pending outcome draft or account selection.' } }];\n  }\n\n  return [{ json: { route: 'finalize', submittedAt, draft, account_id: accountId } }];\n}\n\nconst originalMessage = String(body.outcome?.originalMessage ?? '').trim();\n\nif (!originalMessage) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Outcome originalMessage is required.' } }];\n}\n\nreturn [{\n  json: {\n    route: 'extract',\n    submittedAt,\n    originalMessage,\n    discordContext: body.discordContext ?? {}\n  }\n}];"
+        "jsCode": "const body = $json.body ?? {};\n\nconst pad = (value) => String(value).padStart(2, '0');\nconst formatDateTime = (value) => {\n  const raw = String(value ?? '').trim();\n\n  if (!raw) {\n    const now = new Date();\n    return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;\n  }\n\n  const alreadyFormatted = raw.match(/^(\\d{2})\/(\\d{2})\/(\\d{4}) (\\d{2}):(\\d{2})$/);\n  if (alreadyFormatted) {\n    return raw;\n  }\n\n  const isoDate = new Date(raw);\n  if (!Number.isNaN(isoDate.getTime())) {\n    const formatted = new Intl.DateTimeFormat('en-GB', {\n      timeZone: 'Asia/Saigon',\n      day: '2-digit',\n      month: '2-digit',\n      year: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit',\n      hour12: false\n    }).formatToParts(isoDate).reduce((acc, part) => {\n      if (part.type !== 'literal') acc[part.type] = part.value;\n      return acc;\n    }, {});\n\n    return `${formatted.day}/${formatted.month}/${formatted.year} ${formatted.hour}:${formatted.minute}`;\n  }\n\n  const slashDate = raw.match(/^(\\d{1,2})\/(\\d{1,2})\/(\\d{4})(?:[ T](\\d{1,2}):(\\d{2}))?$/);\n  if (slashDate) {\n    const [, day, month, year, hour = '00', minute = '00'] = slashDate;\n    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${minute}`;\n  }\n\n  return raw;\n};\n\nconst submittedAt = formatDateTime(body.submittedAt ?? new Date().toISOString());\n\nif ((body.command ?? null) !== 'out') {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Unsupported outcome request.' } }];\n}\n\nif (body.mode === 'finalize') {\n  const draft = body.outcome?.draft ?? null;\n  const accountId = body.outcome?.account_id ?? null;\n\n  if (!draft || !accountId) {\n    return [{ json: { route: 'respond', status: 'invalid', message: 'Missing pending outcome draft or account selection.' } }];\n  }\n\n  return [{ json: { route: 'finalize', submittedAt, draft, account_id: accountId } }];\n}\n\nconst originalMessage = String(body.outcome?.originalMessage ?? '').trim();\n\nif (!originalMessage) {\n  return [{ json: { route: 'respond', status: 'invalid', message: 'Outcome originalMessage is required.' } }];\n}\n\nreturn [{\n  json: {\n    route: 'extract',\n    submittedAt,\n    originalMessage,\n    discordContext: body.discordContext ?? {}\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -691,7 +691,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"gpt-5.4\",\n  \"input\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"input_text\",\n          \"text\": \"Extract order details from this image. Return only data matching the provided schema. Convert values like '23.120đ' to integer VND values such as 23120. Use null for fields that are not clearly visible.\"\n        },\n        {\n          \"type\": \"input_image\",\n          \"image_url\": \"{{$json.body.receipt.url}}\"\n        }\n      ]\n    }\n  ],\n  \"text\": {\n    \"format\": {\n      \"type\": \"json_schema\",\n      \"name\": \"bach_hoa_xanh_order\",\n      \"strict\": true,\n      \"schema\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"merchant\": { \"type\": [\"string\", \"null\"] },\n          \"order_status\": { \"type\": [\"string\", \"null\"] },\n          \"order_id\": { \"type\": [\"string\", \"null\"] },\n          \"order_time\": { \"type\": [\"string\", \"null\"] },\n          \"items\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"additionalProperties\": false,\n              \"properties\": {\n                \"name\": { \"type\": [\"string\", \"null\"] },\n                \"quantity\": { \"type\": [\"number\", \"null\"] },\n                \"price_vnd\": { \"type\": [\"number\", \"null\"] }\n              },\n              \"required\": [\"name\", \"quantity\", \"price_vnd\"]\n            }\n          },\n          \"payment\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n              \"total_vnd\": { \"type\": [\"number\", \"null\"] },\n              \"amount_paid_vnd\": { \"type\": [\"number\", \"null\"] },\n              \"amount_due_vnd\": { \"type\": [\"number\", \"null\"] }\n            },\n            \"required\": [\"total_vnd\", \"amount_paid_vnd\", \"amount_due_vnd\"]\n          },\n          \"reward_points_vnd\": { \"type\": [\"number\", \"null\"] }\n        },\n        \"required\": [\n          \"merchant\",\n          \"order_status\",\n          \"order_id\",\n          \"order_time\",\n          \"items\",\n          \"payment\",\n          \"reward_points_vnd\"\n        ]\n      }\n    }\n  }\n}",
+        "jsonBody": "={\n  \"model\": \"gpt-5.4\",\n  \"input\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"input_text\",\n          \"text\": \"Extract order details from this image. Return only data matching the provided schema. Convert values like '23.120đ' to integer VND values such as 23120. Use null for fields that are not clearly visible.\"\n        },\n        {\n          \"type\": \"input_image\",\n          \"image_url\": \"{{$json.body.receipt.url}}\"\n        }\n      ]\n    }\n  ],\n  \"text\": {\n    \"format\": {\n      \"type\": \"json_schema\",\n      \"name\": \"bach_hoa_xanh_order\",\n      \"strict\": true,\n      \"schema\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"properties\": {\n          \"merchant\": { \"type\": [\"string\", \"null\"] },\n          \"order_status\": { \"type\": [\"string\", \"null\"] },\n          \"order_id\": { \"type\": [\"string\", \"null\"] },\n          \"order_time\": { \"type\": [\"string\", \"null\"] },\n          \"items\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"additionalProperties\": false,\n              \"properties\": {\n                \"name\": { \"type\": [\"string\", \"null\"] },\n                \"quantity\": { \"type\": [\"number\", \"null\"] },\n                \"price_vnd\": { \"type\": [\"number\", \"null\"] }\n              },\n              \"required\": [\"name\", \"quantity\", \"price_vnd\"]\n            }\n          },\n          \"payment\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n              \"total_vnd\": { \"type\": [\"number\", \"null\"] }\n            },\n            \"required\": [\"total_vnd\"]\n          },\n          \"reward_points_vnd\": { \"type\": [\"number\", \"null\"] }\n        },\n        \"required\": [\n          \"merchant\",\n          \"order_status\",\n          \"order_id\",\n          \"order_time\",\n          \"items\",\n          \"payment\",\n          \"reward_points_vnd\"\n        ]\n      }\n    }\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -705,7 +705,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const extracted = JSON.parse($input.first().json.output[0].content[0].text);\nconst webhook = $(\"Webhook get receipt image\").first().json.body;\nconst submittedAt = webhook.submittedAt ?? new Date().toISOString();\nconst receiptId = extracted.order_id ?? `receipt_${Date.now()}`;\nconst dedupeKey = [extracted.merchant ?? '', extracted.order_id ?? '', extracted.payment?.total_vnd ?? '', extracted.order_time ?? ''].join('|');\n\nreturn [{\n  json: {\n    receipt_id: receiptId,\n    source_file_id: '',\n    merchant: extracted.merchant ?? null,\n    order_status: extracted.order_status ?? null,\n    order_time: extracted.order_time ?? null,\n    total_vnd: extracted.payment?.total_vnd ?? null,\n    amount_paid_vnd: extracted.payment?.amount_paid_vnd ?? null,\n    amount_due_vnd: extracted.payment?.amount_due_vnd ?? null,\n    payment_method: '',\n    note: webhook.note ?? '',\n    created_at: submittedAt,\n    updated_at: submittedAt,\n    dedupe_key: dedupeKey,\n    items: Array.isArray(extracted.items) ? extracted.items : []\n  }\n}];"
+        "jsCode": "const extracted = JSON.parse($input.first().json.output[0].content[0].text);\nconst webhook = $(\"Webhook get receipt image\").first().json.body;\n\nconst pad = (value) => String(value).padStart(2, '0');\nconst formatDateTime = (value) => {\n  const raw = String(value ?? '').trim();\n\n  if (!raw) {\n    return null;\n  }\n\n  const alreadyFormatted = raw.match(/^(\\d{2})\/(\\d{2})\/(\\d{4}) (\\d{2}):(\\d{2})$/);\n  if (alreadyFormatted) {\n    return raw;\n  }\n\n  const receiptStyle = raw.match(/^(\\d{1,2}):(\\d{2}),\\s*(\\d{1,2})\/(\\d{1,2})\/(\\d{4})$/);\n  if (receiptStyle) {\n    const [, hour, minute, day, month, year] = receiptStyle;\n    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${minute}`;\n  }\n\n  const slashDate = raw.match(/^(\\d{1,2})\/(\\d{1,2})\/(\\d{4})(?:[ T](\\d{1,2}):(\\d{2}))?$/);\n  if (slashDate) {\n    const [, day, month, year, hour = '00', minute = '00'] = slashDate;\n    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${minute}`;\n  }\n\n  const isoDate = new Date(raw);\n  if (!Number.isNaN(isoDate.getTime())) {\n    const formatted = new Intl.DateTimeFormat('en-GB', {\n      timeZone: 'Asia/Saigon',\n      day: '2-digit',\n      month: '2-digit',\n      year: 'numeric',\n      hour: '2-digit',\n      minute: '2-digit',\n      hour12: false\n    }).formatToParts(isoDate).reduce((acc, part) => {\n      if (part.type !== 'literal') acc[part.type] = part.value;\n      return acc;\n    }, {});\n\n    return `${formatted.day}/${formatted.month}/${formatted.year} ${formatted.hour}:${formatted.minute}`;\n  }\n\n  return raw;\n};\n\nconst submittedAt = formatDateTime(webhook.submittedAt ?? new Date().toISOString());\nconst orderTime = formatDateTime(extracted.order_time);\nconst receiptId = extracted.order_id ?? `receipt_${Date.now()}`;\nconst dedupeKey = [extracted.merchant ?? '', extracted.order_id ?? '', extracted.payment?.total_vnd ?? '', orderTime ?? ''].join('|');\n\nreturn [{\n  json: {\n    receipt_id: receiptId,\n    source_file_id: '',\n    merchant: extracted.merchant ?? null,\n    order_status: extracted.order_status ?? null,\n    order_time: orderTime,\n    total_vnd: extracted.payment?.total_vnd ?? null,\n    payment_method: '',\n    note: webhook.note ?? '',\n    created_at: submittedAt,\n    dedupe_key: dedupeKey,\n    items: Array.isArray(extracted.items) ? extracted.items : []\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -798,7 +798,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const base = $('Code in JavaScript').first().json;\nconst drive = $json;\n\nreturn [{\n  json: {\n    ...base,\n    source_file_id: drive.id ?? '',\n    updated_at: new Date().toISOString()\n  }\n}];"
+        "jsCode": "const base = $('Code in JavaScript').first().json;\nconst drive = $json;\n\nreturn [{\n  json: {\n    ...base,\n    source_file_id: drive.id ?? ''\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -835,12 +835,9 @@
             "order_status": "={{ $json.order_status }}",
             "order_time": "={{ $json.order_time }}",
             "total_vnd": "={{ $json.total_vnd }}",
-            "amount_paid_vnd": "={{ $json.amount_paid_vnd }}",
-            "amount_due_vnd": "={{ $json.amount_due_vnd }}",
             "payment_method": "={{ $json.payment_method }}",
             "note": "={{ $json.note }}",
             "created_at": "={{ $json.created_at }}",
-            "updated_at": "={{ $json.updated_at }}",
             "dedupe_key": "={{ $json.dedupe_key }}"
           },
           "matchingColumns": [
@@ -908,26 +905,6 @@
               "removed": false
             },
             {
-              "id": "amount_paid_vnd",
-              "displayName": "amount_paid_vnd",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "canBeUsedToMatch": false,
-              "removed": false
-            },
-            {
-              "id": "amount_due_vnd",
-              "displayName": "amount_due_vnd",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "canBeUsedToMatch": false,
-              "removed": false
-            },
-            {
               "id": "payment_method",
               "displayName": "payment_method",
               "required": false,
@@ -950,16 +927,6 @@
             {
               "id": "created_at",
               "displayName": "created_at",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": false,
-              "removed": false
-            },
-            {
-              "id": "updated_at",
-              "displayName": "updated_at",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -1246,7 +1213,7 @@
                   "type": "output_text",
                   "annotations": [],
                   "logprobs": [],
-                  "text": "{\"merchant\":\"Bách hóa XANH\",\"order_status\":\"Giao thành công\",\"order_id\":\"OV105095604317177\",\"order_time\":\"16:47, 08/04/2026\",\"delivery_time\":\"16:47, 08/04/2026\",\"items\":[{\"name\":\"THỊT XAY C.P\",\"quantity\":0.17,\"price_vnd\":23120}],\"payment\":{\"total_vnd\":23120,\"amount_paid_vnd\":23120,\"amount_due_vnd\":0},\"reward_points_vnd\":231}"
+                  "text": "{\"merchant\":\"Bách hóa XANH\",\"order_status\":\"Giao thành công\",\"order_id\":\"OV105095604317177\",\"order_time\":\"16:47, 08/04/2026\",\"delivery_time\":\"16:47, 08/04/2026\",\"items\":[{\"name\":\"THỊT XAY C.P\",\"quantity\":0.17,\"price_vnd\":23120}],\"payment\":{\"total_vnd\":23120},\"reward_points_vnd\":231}"
                 }
               ],
               "phase": "final_answer",
@@ -1346,24 +1313,10 @@
                           "number",
                           "null"
                         ]
-                      },
-                      "amount_paid_vnd": {
-                        "type": [
-                          "number",
-                          "null"
-                        ]
-                      },
-                      "amount_due_vnd": {
-                        "type": [
-                          "number",
-                          "null"
-                        ]
                       }
                     },
                     "required": [
-                      "total_vnd",
-                      "amount_paid_vnd",
-                      "amount_due_vnd"
+                      "total_vnd"
                     ]
                   },
                   "reward_points_vnd": {
