@@ -12,10 +12,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        1840,
-        2480
+        8640,
+        6496
       ],
-      "id": "bd5f2c3c-8c7f-4ffa-b5b7-ad0779d6f8ba",
+      "id": "2ec5ea82-1725-4667-8f7f-d13c2b880c0c",
       "name": "Webhook get receipt image",
       "webhookId": "dda71a60-b186-4f74-aa60-70c8523b8fec",
       "credentials": {
@@ -33,10 +33,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2080,
-        2464
+        8880,
+        6480
       ],
-      "id": "2c62b7e2-0096-43c2-85dc-ea34e2e563c4",
+      "id": "fda83994-300d-4473-b45e-56137a7aa82f",
       "name": "Validate webhook payload"
     },
     {
@@ -122,10 +122,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        2288,
-        2448
+        9088,
+        6464
       ],
-      "id": "dd7798e7-dff7-471b-9790-93b943d310b1",
+      "id": "89696bef-2e2d-43d1-8190-3888a4746c78",
       "name": "Switch"
     },
     {
@@ -135,10 +135,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2624,
-        2688
+        9424,
+        6704
       ],
-      "id": "bc73a1bb-fa75-4896-a660-1c72d6f4ce48",
+      "id": "ad248c92-1b9f-4f47-8f80-1fc7c280c63b",
       "name": "Prepare outcome mode"
     },
     {
@@ -224,10 +224,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        2864,
-        2672
+        9664,
+        6688
       ],
-      "id": "44b8af44-f76a-4053-a03f-7932d11c8251",
+      "id": "c534cd52-d4da-4142-9fb5-5d3145e77059",
       "name": "Outcome mode switch"
     },
     {
@@ -249,10 +249,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        3120,
-        2272
+        9920,
+        6288
       ],
-      "id": "406b3486-a079-4a2b-8d68-e0e73a2aba25",
+      "id": "d055fecc-3332-4542-8c86-b003b25adabf",
       "name": "Read accounts for outcome extract",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -262,16 +262,14 @@
       }
     },
     {
-      "parameters": {
-        "mode": "append"
-      },
+      "parameters": {},
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        3312,
-        2384
+        10112,
+        6400
       ],
-      "id": "f498f62b-b68a-4262-9328-933cf0fda3c8",
+      "id": "d8098842-033a-48b4-bd3b-65ce3c4eda48",
       "name": "Merge outcome catalogs"
     },
     {
@@ -281,10 +279,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3504,
-        2384
+        10304,
+        6400
       ],
-      "id": "d4d1253f-e96b-4759-ab4b-3370532a5242",
+      "id": "f7ee1214-3b94-437a-9ce5-b468a2d885d8",
       "name": "Build outcome catalogs"
     },
     {
@@ -312,10 +310,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3728,
-        2384
+        10528,
+        6400
       ],
-      "id": "52225e52-7751-4748-8993-ddc8cb513b84",
+      "id": "0def88dc-5e2b-464a-936f-5b1c25744ad3",
       "name": "Extract outcome with AI"
     },
     {
@@ -325,10 +323,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3936,
-        2384
+        10736,
+        6400
       ],
-      "id": "9058a36f-3c16-483f-94fa-e34b84631af3",
+      "id": "bfc1c549-2b6f-41fd-bc90-f28a903ab755",
       "name": "Prepare extracted outcome"
     },
     {
@@ -390,10 +388,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        4192,
-        2384
+        10992,
+        6400
       ],
-      "id": "c4d37c7a-6a13-47d1-a477-e4c55dee7e06",
+      "id": "3b4b8f15-193f-40b1-928d-8fc7158c6eda",
       "name": "Outcome result switch"
     },
     {
@@ -403,10 +401,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3568,
-        2960
+        10368,
+        6976
       ],
-      "id": "f5fa65ac-f80c-44c8-a28a-a6bedcf78213",
+      "id": "d51faf75-8110-4723-aa4d-d9c5c1e7a398",
       "name": "Finalize pending outcome"
     },
     {
@@ -468,10 +466,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        3808,
-        2960
+        10608,
+        6976
       ],
-      "id": "fd7d8c86-1f80-41f7-9e61-68c58282d987",
+      "id": "dc819f9a-f1f8-410a-bcef-c96c6b686a7e",
       "name": "Finalize outcome switch"
     },
     {
@@ -493,10 +491,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        3104,
-        2960
+        9904,
+        6976
       ],
-      "id": "99d16ed5-4cb9-4799-b53c-d62ad73a5274",
+      "id": "282b6a34-f33a-4f36-b291-a74d8bedba19",
       "name": "Read accounts for outcome finalize",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -512,10 +510,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3328,
-        2960
+        10128,
+        6976
       ],
-      "id": "1e62311a-ca12-4bdc-affe-f12a5c4d36a5",
+      "id": "b3775259-203a-4581-bb23-0f35168232dd",
       "name": "Build finalize account catalog"
     },
     {
@@ -525,10 +523,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4432,
-        2960
+        11232,
+        6976
       ],
-      "id": "a101a58b-63d2-496c-a1ab-dd95ff9b37b1",
+      "id": "97d86a4e-1036-4453-a685-607cbe04299c",
       "name": "Finalize transaction payload"
     },
     {
@@ -543,10 +541,8 @@
         },
         "sheetName": {
           "__rl": true,
-          "value": "transactions",
-          "mode": "list",
-          "cachedResultName": "transactions",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bVPIiIiLnk1D5weIcNnFSnFT_l-u51HBbvSgZcbqDa0/edit"
+          "mode": "name",
+          "value": "transactions"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -664,10 +660,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        4736,
-        2960
+        11536,
+        6976
       ],
-      "id": "885bcdd9-19d2-4891-95a2-dd62740e3070",
+      "id": "b7cde6fa-b4a1-48c8-bdea-8e1142a3bf2c",
       "name": "Append transaction row",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -701,10 +697,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2656,
-        1952
+        9456,
+        5968
       ],
-      "id": "a2b90d8c-8444-4a3b-b729-c5a829d2c6e5",
+      "id": "1d447abc-e4b3-4d81-a9a6-fc537f63c51f",
       "name": "HTTP Request"
     },
     {
@@ -714,10 +710,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2912,
-        1952
+        9712,
+        5968
       ],
-      "id": "0a21298b-e5c9-4f73-87e1-09f951e09991",
+      "id": "e6bdc248-29a9-4879-b53c-53312f8084dd",
       "name": "Code in JavaScript"
     },
     {
@@ -738,10 +734,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3168,
-        1952
+        9968,
+        5968
       ],
-      "id": "25c671d8-7ac6-490b-ad42-da43aca8c1ee",
+      "id": "d88a9bcc-6223-44bd-99b5-77407e1f56b5",
       "name": "Compress receipt image with Tinify",
       "credentials": {
         "httpBasicAuth": {
@@ -758,10 +754,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        3376,
-        1952
+        10176,
+        5968
       ],
-      "id": "7c76e9e1-6cc8-4b0d-a9d9-2d7609c1a73c",
+      "id": "77333caf-fa37-43d1-97b6-16162cfc94cd",
       "name": "Download compressed receipt image"
     },
     {
@@ -788,10 +784,10 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        3632,
-        1952
+        10432,
+        5968
       ],
-      "id": "856946d5-973f-487e-9b67-ea96fe7dd5b1",
+      "id": "0a76aaea-5dd0-4436-9f6c-7e97a5386ebf",
       "name": "Upload compressed receipt to Drive",
       "credentials": {
         "googleDriveOAuth2Api": {
@@ -807,10 +803,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3840,
-        1952
+        10640,
+        5968
       ],
-      "id": "99c09dc5-6b40-4508-913e-d5b2fe5beef2",
+      "id": "f664e14b-ffda-4b94-b477-f0e57d45aeb6",
       "name": "Finalize receipt row"
     },
     {
@@ -990,10 +986,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        4048,
-        1952
+        10848,
+        5968
       ],
-      "id": "fcae5dcd-6763-49e2-a579-182390908e5a",
+      "id": "39c4e753-b49e-41d8-a67b-99ba8a62c9a2",
       "name": "Append or update row in sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1009,10 +1005,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4288,
-        1952
+        11088,
+        5968
       ],
-      "id": "1f6e9bb4-8995-4f5c-8711-f65467be0976",
+      "id": "ca372a72-8469-4cce-acee-84b5f3a13288",
       "name": "Flatten receipt items"
     },
     {
@@ -1115,10 +1111,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        4544,
-        1952
+        11344,
+        5968
       ],
-      "id": "bd8a4afb-25ac-4c6c-85f1-e81b01064f08",
+      "id": "2f9fd023-4d84-41d2-8be0-f55457d125c5",
       "name": "Append or update receipt items row",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1138,10 +1134,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2624,
-        3392
+        9424,
+        7408
       ],
-      "id": "a8aa00d8-ec67-4aff-8863-62006d6af396",
+      "id": "add25caa-2ad8-461b-a32c-0656418cc2e8",
       "name": "Respond invalid webhook"
     },
     {
@@ -1151,10 +1147,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        4448,
-        3376
+        11536,
+        6736
       ],
-      "id": "d4573280-5740-47cb-9162-dd43ee0c52de",
+      "id": "c54695bc-d011-4f13-909b-9dbcdbf9755a",
       "name": "Respond outcome webhook"
     },
     {
@@ -1168,10 +1164,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        5008,
-        2960
+        11808,
+        6976
       ],
-      "id": "7ec319aa-efcc-4091-902f-e28ef1e0bc0b",
+      "id": "f3841ac8-b626-4775-84e9-bc87e23ecc51",
       "name": "Respond outcome success"
     },
     {
@@ -1185,10 +1181,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        4784,
-        1952
+        11584,
+        5968
       ],
-      "id": "30a3d8ce-aafa-42cb-b59e-96ec0f0d91b3",
+      "id": "da361216-4e6b-4475-84e3-f90f844c711f",
       "name": "Respond receipt success"
     },
     {
@@ -1210,10 +1206,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        3120,
-        2480
+        9920,
+        6496
       ],
-      "id": "2131c272-4236-4ab1-9290-e1530303479c",
+      "id": "ccdb96b5-cb00-4295-829e-7c8cddf65415",
       "name": "Read categories for outcome extract",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1778,12 +1774,12 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "5e9a1e03-bc10-423d-83af-4b7640c3d8c3",
+  "versionId": "18e65388-8249-4c5a-b0f2-e96794d4c5bf",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ece3ee2dfa1bf7ba55c96e1d4f222c23bf9f007e1f643705a900ecde69796ebf"
