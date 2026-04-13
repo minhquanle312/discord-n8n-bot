@@ -289,6 +289,8 @@
       "parameters": {
         "method": "POST",
         "url": "https://aiproxy.moreshared.com/v1/responses",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -314,7 +316,13 @@
         8560
       ],
       "id": "9d2b9f5e-09c8-4788-884b-318ea465c42a",
-      "name": "Extract outcome with AI"
+      "name": "Extract outcome with AI",
+      "credentials": {
+        "httpMultipleHeadersAuth": {
+          "id": "GuKSKNdbw0jboz0v",
+          "name": "AI Proxy api key"
+        }
+      }
     },
     {
       "parameters": {
@@ -676,13 +684,11 @@
       "parameters": {
         "method": "POST",
         "url": "https://aiproxy.moreshared.com/v1/responses",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer sk-6nsFYn2tmcijnY6Wx"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -701,7 +707,13 @@
         8128
       ],
       "id": "f9019c8e-5d47-41ff-ba91-dacbb4f1d119",
-      "name": "HTTP Request"
+      "name": "HTTP Request",
+      "credentials": {
+        "httpMultipleHeadersAuth": {
+          "id": "GuKSKNdbw0jboz0v",
+          "name": "Multiple Headers Auth account"
+        }
+      }
     },
     {
       "parameters": {
@@ -1754,7 +1766,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "5d5a6197-5d7b-4cb8-92d0-7a30b99bd7d4",
+  "versionId": "2b8ed752-c370-4b42-a4db-48c6c108b409",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ece3ee2dfa1bf7ba55c96e1d4f222c23bf9f007e1f643705a900ecde69796ebf"
