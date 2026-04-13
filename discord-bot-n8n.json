@@ -135,8 +135,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        15952,
-        8864
+        15936,
+        9216
       ],
       "id": "ba7a4793-e477-4d2d-9719-00393bc0e369",
       "name": "Prepare outcome mode"
@@ -224,8 +224,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        16192,
-        8848
+        16176,
+        9200
       ],
       "id": "752990df-d448-433e-b7ea-3cf96eaac0ac",
       "name": "Outcome mode switch"
@@ -249,8 +249,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        16448,
-        8448
+        16432,
+        8800
       ],
       "id": "832ff341-534b-4f1e-88c8-96d2cc0a97f8",
       "name": "Read accounts for outcome extract",
@@ -266,8 +266,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        16640,
-        8560
+        16624,
+        8912
       ],
       "id": "3856dafc-86ec-47fb-9dc3-e0aab7e3daaf",
       "name": "Merge outcome catalogs"
@@ -279,8 +279,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        16832,
-        8560
+        16816,
+        8912
       ],
       "id": "15b88afe-20c1-46c4-bc68-b1123d6a84ae",
       "name": "Build outcome catalogs"
@@ -289,8 +289,8 @@
       "parameters": {
         "method": "POST",
         "url": "https://aiproxy.moreshared.com/v1/responses",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -312,8 +312,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        17056,
-        8560
+        17040,
+        8912
       ],
       "id": "9d2b9f5e-09c8-4788-884b-318ea465c42a",
       "name": "Extract outcome with AI",
@@ -321,6 +321,10 @@
         "httpMultipleHeadersAuth": {
           "id": "GuKSKNdbw0jboz0v",
           "name": "AI Proxy api key"
+        },
+        "httpHeaderAuth": {
+          "id": "t7BfvGhMucjql13b",
+          "name": "Header Auth account 2"
         }
       }
     },
@@ -331,8 +335,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        17264,
-        8560
+        17248,
+        8912
       ],
       "id": "7cfb44d8-c25e-4c9a-b9e7-f6f596b9e05f",
       "name": "Prepare extracted outcome"
@@ -396,8 +400,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        17520,
-        8560
+        17504,
+        8912
       ],
       "id": "a9ba783b-12f2-4083-9234-d5a7f9837ab9",
       "name": "Outcome result switch"
@@ -409,8 +413,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        16896,
-        8864
+        16880,
+        9216
       ],
       "id": "dc5f7d86-e4d6-44aa-a833-58c2a55af968",
       "name": "Finalize pending outcome"
@@ -474,8 +478,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        17136,
-        8864
+        17120,
+        9216
       ],
       "id": "e671c8a9-da9f-418f-ac00-deb1291d13a2",
       "name": "Finalize outcome switch"
@@ -499,8 +503,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        16432,
-        8864
+        16416,
+        9216
       ],
       "id": "0360cb1b-c120-4f2d-8579-e93c7e58a399",
       "name": "Read accounts for outcome finalize",
@@ -518,8 +522,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        16656,
-        8864
+        16640,
+        9216
       ],
       "id": "af150864-1b14-44b2-8474-87ae66478619",
       "name": "Build finalize account catalog"
@@ -531,8 +535,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        17760,
-        8848
+        17744,
+        9200
       ],
       "id": "4bf3aed0-68d9-47aa-b32b-462556a48e0b",
       "name": "Finalize transaction payload"
@@ -668,8 +672,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        18064,
-        8848
+        18048,
+        9200
       ],
       "id": "4efd56e1-12c3-4387-9068-525cb2c0cb6a",
       "name": "Append transaction row",
@@ -684,8 +688,8 @@
       "parameters": {
         "method": "POST",
         "url": "https://aiproxy.moreshared.com/v1/responses",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -711,7 +715,11 @@
       "credentials": {
         "httpMultipleHeadersAuth": {
           "id": "GuKSKNdbw0jboz0v",
-          "name": "Multiple Headers Auth account"
+          "name": "AI Proxy api key"
+        },
+        "httpHeaderAuth": {
+          "id": "hIsCLzCUMGXNJInl",
+          "name": "Header Auth AI proxy api key"
         }
       }
     },
@@ -1113,8 +1121,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        15952,
-        9568
+        15616,
+        9008
       ],
       "id": "763fb433-f754-45cb-9095-38d94163ffa6",
       "name": "Respond invalid webhook"
@@ -1126,8 +1134,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        17648,
-        9872
+        17632,
+        10224
       ],
       "id": "6cc56ca5-697d-4390-b211-f422da64d3ff",
       "name": "Respond outcome webhook"
@@ -1143,8 +1151,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        18336,
-        8848
+        18320,
+        9200
       ],
       "id": "7657f029-1d7e-4ed8-a53f-49d73aeb7d15",
       "name": "Respond outcome success"
@@ -1185,8 +1193,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        16448,
-        8656
+        16432,
+        9008
       ],
       "id": "84780d25-abaa-4c93-a5f6-0ea24b3360fd",
       "name": "Read categories for outcome extract",
@@ -1766,7 +1774,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "2b8ed752-c370-4b42-a4db-48c6c108b409",
+  "versionId": "dc73b4b5-3aca-4a41-8f74-756e07de94a1",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ece3ee2dfa1bf7ba55c96e1d4f222c23bf9f007e1f643705a900ecde69796ebf"
